@@ -1,0 +1,12 @@
+{
+  "name": "adeo-workspace",
+  "version": "1.0.0",
+  "scripts": {
+    "start": "concurrently \"cd adeo-request-system-backend && npm start\" \"cd adeo-request-system-frontend && npm run dev\"",
+    "install-all": "concurrently \"cd adeo-request-system-backend && npm install\" \"cd adeo-request-system-frontend && npm install\"",
+    "dev": "npm run start"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.0"
+  }
+}
