@@ -7,6 +7,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { fetchWithConfig } from '@/api/config';
 // import { Progress } from '@/components/ui/progress'; // Import Progress component if you have it
 
 const NewRequestPage = () => {
@@ -43,61 +44,46 @@ const NewRequestPage = () => {
     return true;
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setIsLoading(true);
-    setError('');
-    setUploadProgress(0);
-
-    if (!validateForm()) {
-      setIsLoading(false);
-      return;
-    }
-
+  const handleSubmit = async (data: RequestFormData) => {
     try {
-      const formDataToSend = new FormData();
-      formDataToSend.append('title', formData.title.trim());
-      formDataToSend.append('description', formData.description.trim());
-      formDataToSend.append('requestType', formData.requestType);
-      formDataToSend.append('priority', formData.priority);
+        const formData = new FormData();
+        
+        // Add form fields
+        Object.entries(data).forEach(([key, value]) => {
+            if (value !== undefined && value !== null) {
+                formData.append(key, value.toString());
+            }
+        });
 
-      if (formData.attachments) {
-        // Validate file size
-        if (formData.attachments.size > 10 * 1024 * 1024) { // 10MB limit
-          throw new Error('File size must be less than 10MB');
+        // Add files if any
+        if (files?.length > 0) {
+            files.forEach(file => {
+                formData.append('files', file);
+            });
         }
-        formDataToSend.append('attachment', formData.attachments);
-      }
 
-      const response = await fetch('http://localhost:3000/api/requests', {
-        method: 'POST',
-        body: formDataToSend,
-        credentials: 'include', // Include cookies if needed
-        headers: {
-          // Let the browser set the content-type with boundary
-          'Accept': 'application/json',
-        },
-        onUploadProgress: (progressEvent) => {
-          const percentCompleted = Math.round(
-            (progressEvent.loaded * 100) / progressEvent.total
-          );
-          setUploadProgress(percentCompleted);
-        },
-      });
+        const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || `Server error: ${response.status}`);
-      }
+        const response = await fetch(`${API_URL}/api/requests`, {
+            method: 'POST',
+            body: formData,
+            credentials: 'include',
+            // Don't set Content-Type header - browser will set it automatically with boundary
+        });
 
-      const result = await response.json();
-      navigate('/requests');
-    } catch (err) {
-      console.error('Error submitting request:', err);
-      setError(err.message || 'Failed to submit request. Please try again.');
-    } finally {
-      setIsLoading(false);
-      setUploadProgress(0);
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.message || 'Failed to create request');
+        }
+
+        const result = await response.json();
+        console.log('Request created successfully:', result);
+        
+        // Handle success (e.g., show notification, redirect)
+        
+    } catch (error) {
+        console.error('Error submitting request:', error);
+        // Handle error (e.g., show error notification)
     }
   };
 

@@ -36,7 +36,17 @@ const allowedOrigins = [
 
 // CORS configuration
 const corsOptions = {
-    origin: 'http://localhost:5173', // Your Vite frontend URL
+    origin: function (origin, callback) {
+        // Allow requests with no origin (like mobile apps or curl requests)
+        if (!origin) return callback(null, true);
+        
+        if (allowedOrigins.indexOf(origin) !== -1) {
+            callback(null, true);
+        } else {
+            console.log('Origin not allowed by CORS:', origin);
+            callback(new Error('Not allowed by CORS'));
+        }
+    },
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Accept', 'Authorization'],
@@ -115,7 +125,7 @@ const upload = multer({
         fileSize: 10 * 1024 * 1024, // 10MB
         files: 5 // maximum 5 files
     }
-});
+}).array('files', 5);
 
 // Logging configuration
 const morganFormat = process.env.NODE_ENV === 'production' ? 'combined' : 'dev';
@@ -171,31 +181,33 @@ app.use((req, res, next) => {
 });
 
 // File upload middleware for /api/requests endpoint
-app.post('/api/requests', (req, res, next) => {
+app.use('/api/requests', (req, res, next) => {
+    if (req.method !== 'POST') {
+        return next();
+    }
+
+    console.log('Starting file upload process...');
+    
     upload(req, res, function(err) {
+        console.log('Upload middleware processing complete');
+        console.log('Files received:', req.files);
+        console.log('Form data received:', req.body);
+        
         if (err instanceof multer.MulterError) {
-            // A Multer error occurred when uploading
             console.error('Multer error:', err);
             return res.status(400).json({
                 status: 'error',
                 message: 'File upload error',
-                error: err
+                error: err.message
             });
         } else if (err) {
-            // An unknown error occurred
             console.error('Unknown error:', err);
             return res.status(500).json({
                 status: 'error',
                 message: 'Unknown error occurred',
-                error: err
+                error: err.message
             });
         }
-        
-        // Log the processed request
-        console.log('Processed request:');
-        console.log('Files:', req.files);
-        console.log('Body:', req.body);
-        
         next();
     });
 }, requestRoutes);
