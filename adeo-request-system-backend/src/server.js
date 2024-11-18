@@ -34,8 +34,6 @@ app.use(cors());  // Enable CORS
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-
-
 // Enhanced rate limiting with configurable options
 const limiter = rateLimit({
     windowMs: process.env.RATE_LIMIT_WINDOW || 15 * 60 * 1000, // Configurable window (default 15 minutes)

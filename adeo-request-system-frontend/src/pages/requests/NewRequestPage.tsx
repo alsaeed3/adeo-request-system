@@ -7,7 +7,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Progress } from '@/components/ui/progress'; // Import Progress component if you have it
+// import { Progress } from '@/components/ui/progress'; // Import Progress component if you have it
 
 const NewRequestPage = () => {
   const navigate = useNavigate();
