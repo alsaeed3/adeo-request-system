@@ -52,18 +52,26 @@ export function RequestForm() {
     try {
       const formData = new FormData();
       
+      // Log what we're about to send
+      console.log('Submitting form data:', data);
+      
       // Add form fields
-      formData.append('title', data.title);
-      formData.append('description', data.content);
-      formData.append('requestType', data.type);
-      formData.append('priority', data.priority);
-      formData.append('department', data.department);
+      Object.entries(data).forEach(([key, value]) => {
+        if (value !== undefined && value !== null) {
+          formData.append(key, value.toString());
+        }
+      });
 
       // Add files
-      if (files.length > 0) {
+      if (files?.length > 0) {
         files.forEach(file => {
           formData.append('files', file);
         });
+      }
+
+      // Log the FormData (for debugging)
+      for (let pair of formData.entries()) {
+        console.log(pair[0], pair[1]);
       }
 
       const response = await fetch('http://localhost:3000/api/requests', {
@@ -74,12 +82,16 @@ export function RequestForm() {
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.message || 'Failed to create request');
+        console.error('Upload failed:', errorData);
+        throw new Error(errorData.message || 'Upload failed');
       }
 
+      const result = await response.json();
+      console.log('Upload successful:', result);
+      
       navigate('/requests');
     } catch (error) {
-      console.error('Error creating request:', error);
+      console.error('Form submission error:', error);
       // Handle error (show error message to user)
     }
   };

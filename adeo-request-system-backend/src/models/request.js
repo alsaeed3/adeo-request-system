@@ -62,7 +62,7 @@ RequestSchema.add({
     requester: {
         type: Schema.Types.ObjectId,
         ref: 'User',
-        required: true
+        required: false
     },
     requesterDepartment: {
         type: Schema.Types.ObjectId,
