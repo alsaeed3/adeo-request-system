@@ -23,9 +23,12 @@ const generateRequestNumber = async () => {
 // POST handler for new requests
 router.post('/', async (req, res) => {
     try {
-        console.log('Processing request in route handler:', {
-            body: req.body,
-            files: req.files
+        console.log('Received request data:', {
+            title: req.body.title,
+            description: req.body.description,
+            requestType: req.body.requestType,
+            priority: req.body.priority,
+            files: req.files?.length || 0
         });
 
         if (!req.body.title || !req.body.description || !req.body.requestType || !req.body.priority) {
@@ -74,8 +77,11 @@ router.post('/', async (req, res) => {
 
         const request = new Request(requestData);
         const savedRequest = await request.save();
-        
-        console.log('Request saved successfully:', savedRequest);
+        console.log('Request saved to database:', {
+            id: savedRequest._id,
+            requestNumber: savedRequest.requestNumber,
+            title: savedRequest.title
+        });
 
         res.status(201).json({
             status: 'success',
@@ -84,7 +90,7 @@ router.post('/', async (req, res) => {
         });
 
     } catch (error) {
-        console.error('Error in request route handler:', error);
+        console.error('Database save error:', error);
         res.status(500).json({
             status: 'error',
             message: 'Failed to create request',
@@ -98,10 +104,13 @@ router.get('/', async (req, res) => {
     try {
         const requests = await Request.find()
             .sort({ createdAt: -1 })
-            .limit(50);
+            .limit(10);
 
+        console.log('Retrieved requests:', requests.length);
+        
         res.json({
             status: 'success',
+            count: requests.length,
             data: requests
         });
     } catch (error) {
@@ -109,6 +118,32 @@ router.get('/', async (req, res) => {
         res.status(500).json({
             status: 'error',
             message: 'Failed to fetch requests',
+            error: error.message
+        });
+    }
+});
+
+// GET single request by ID
+router.get('/:id', async (req, res) => {
+    try {
+        const request = await Request.findById(req.params.id);
+        
+        if (!request) {
+            return res.status(404).json({
+                status: 'error',
+                message: 'Request not found'
+            });
+        }
+
+        res.json({
+            status: 'success',
+            data: request
+        });
+    } catch (error) {
+        console.error('Error fetching request:', error);
+        res.status(500).json({
+            status: 'error',
+            message: 'Failed to fetch request',
             error: error.message
         });
     }
