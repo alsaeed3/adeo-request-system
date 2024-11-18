@@ -33,6 +33,7 @@ app.use(compression());
 app.use(cors());  // Enable CORS
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+app.use(express.json({ limit:process.env.URLENCODED_BODY_LIMIT || "10mb" }));
 
 // Enhanced rate limiting with configurable options
 const limiter = rateLimit({

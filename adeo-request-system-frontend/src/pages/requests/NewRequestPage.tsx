@@ -229,7 +229,7 @@ const NewRequestPage = () => {
 
               {uploadProgress > 0 && uploadProgress < 100 && (
                 <div className="w-full">
-                  <Progress value={uploadProgress} className="w-full" />
+                  {/* <Progress value={uploadProgress} className="w-full" /> */}
                   <p className="text-sm text-gray-500 mt-1">
                     Uploading: {uploadProgress}%
                   </p>
