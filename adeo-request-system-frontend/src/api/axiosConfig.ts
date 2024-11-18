@@ -1,30 +1,26 @@
 import axios from 'axios';
 
+const API_URL = import.meta.env.VITE_API_URL?.replace(/\/$/, '') || 'http://localhost:3000';
+
 const api = axios.create({
-    baseURL: 'http://localhost:3000/api',
-    withCredentials: true,
-    headers: {
-        'Accept': 'application/json',
-    }
+  baseURL: API_URL,
+  withCredentials: true,
+  headers: {
+    'Content-Type': 'application/json'
+  }
 });
 
-// Add request interceptor to handle FormData
-api.interceptors.request.use((config) => {
-    // Don't set Content-Type when sending FormData
-    if (config.data instanceof FormData) {
-        // Let axios set the Content-Type automatically to multipart/form-data
-        delete config.headers['Content-Type'];
-    }
+// Add request interceptor for debugging
+api.interceptors.request.use(
+  (config) => {
+    // Remove any double slashes in the URL except after http(s):
+    config.url = config.url?.replace(/([^:]\/)\/+/g, "$1");
+    console.log('Making request to:', config.baseURL + config.url);
     return config;
-});
-
-// Add response interceptor for better error handling
-api.interceptors.response.use(
-    (response) => response,
-    (error) => {
-        console.error('API Error:', error.response?.data || error.message);
-        return Promise.reject(error);
-    }
+  },
+  (error) => {
+    return Promise.reject(error);
+  }
 );
 
 export default api;
