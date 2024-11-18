@@ -23,8 +23,22 @@ export const requestsApi = {
   },
 
   createRequest: async (requestData: FormData) => {
-    const { data } = await api.post('/requests', requestData);
-    return data;
+    try {
+      console.log('FormData contents:');
+      for (const pair of requestData.entries()) {
+        console.log(pair[0], pair[1]);
+      }
+
+      const { data } = await api.post('/requests', requestData, {
+        headers: {
+        },
+        timeout: 30000,
+      });
+      return data;
+    } catch (error) {
+      console.error('Create request error:', error);
+      throw error;
+    }
   },
 
   updateRequest: async (id: string, updateData: Partial<Request>) => {

@@ -1,35 +1,28 @@
 import axios from 'axios';
 
 const api = axios.create({
-    baseURL: import.meta.env.VITE_API_URL || 'http://localhost:3000/api',
+    baseURL: 'http://localhost:3000/api',
+    withCredentials: true,
     headers: {
-        'Content-Type': 'application/json',
-    },
+        'Accept': 'application/json',
+    }
 });
 
-// Request interceptor
-api.interceptors.request.use(
-    (config) => {
-        const token = localStorage.getItem('token');
-        if (token) {
-            config.headers.Authorization = `Bearer ${token}`;
-        }
-        return config;
-    },
-    (error) => {
-        return Promise.reject(error);
+// Add request interceptor to handle FormData
+api.interceptors.request.use((config) => {
+    // Don't set Content-Type when sending FormData
+    if (config.data instanceof FormData) {
+        // Let axios set the Content-Type automatically to multipart/form-data
+        delete config.headers['Content-Type'];
     }
-);
+    return config;
+});
 
-// Response interceptor
+// Add response interceptor for better error handling
 api.interceptors.response.use(
     (response) => response,
-    async (error) => {
-        if (error.response?.status === 401) {
-            // Handle unauthorized access
-            localStorage.removeItem('token');
-            window.location.href = '/login';
-        }
+    (error) => {
+        console.error('API Error:', error.response?.data || error.message);
         return Promise.reject(error);
     }
 );
