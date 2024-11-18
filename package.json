@@ -2,11 +2,13 @@
   "name": "adeo-workspace",
   "version": "1.0.0",
   "scripts": {
-    "start": "concurrently \"cd adeo-request-system-backend && npm start\" \"cd adeo-request-system-frontend && npm run dev\"",
+    "prestart": "killall node npm 2>/dev/null || true",
+    "start": "concurrently --kill-others-on-fail --handle-input true --prefix \"[{name}]\" --names \"backend,frontend\" -c \"blue.bold,green.bold\" \"cd adeo-request-system-backend && npm start\" \"cd adeo-request-system-frontend && npm run dev\"",
     "install-all": "concurrently \"cd adeo-request-system-backend && npm install\" \"cd adeo-request-system-frontend && npm install\"",
-    "dev": "npm run start"
+    "dev": "npm run start",
+    "cleanup": "killall node npm esbuild 2>/dev/null || true"
   },
   "devDependencies": {
-    "concurrently": "^8.0.1"
+    "concurrently": "^9.1.0"
   }
 }
