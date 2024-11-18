@@ -5,9 +5,26 @@ import { Card, CardHeader, CardTitle, CardContent } from '../../components/ui/ca
 import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from '../../components/ui/table';
 import { Button } from '../../components/ui/button';
 
+interface APIResponse {
+  status: string;
+  count: number;
+  data: Array<{
+    _id: string;
+    title: string;
+    requestNumber: string;
+    requestType: string;
+    priority: string;
+    status: string;
+    createdAt: string;
+    // Add other fields as needed
+  }>;
+}
+
 const RequestsPage = () => {
   const navigate = useNavigate();
-  const { data: requests, isLoading, error } = useRequests();
+  const { data: response, isLoading, error } = useRequests<APIResponse>();
+
+  const requests = response?.data;
 
   return (
     <div className="container mx-auto py-6">

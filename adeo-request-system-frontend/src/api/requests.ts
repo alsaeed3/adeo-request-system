@@ -14,11 +14,13 @@ interface RequestsParams {
 export const requestsApi = {
   getRequests: async (params: RequestsParams) => {
     const { data } = await api.get('/api/requests', { params });
+    console.log('Request data:', data);
     return data;
   },
 
   getRequest: async (id: string) => {
     const { data } = await api.get(`/api/requests/${id}`);
+    console.log('Request data:', data);
     return data;
   },
 
