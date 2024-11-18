@@ -160,59 +160,44 @@ const handleMulterError = (err, req, res, next) => {
 // Update your POST route to handle file uploads
 router.post('/',
     createRequestLimiter,
-    upload.array('attachments', 5),
+    upload.array('files', 5),
     handleMulterError,
     createRequestValidation,
     validateRequest,
     asyncHandler(async (req, res) => {
-        const startTime = Date.now();
-        const {
-            title,
-            description,
-            requestType,
-            priority,
-            customFields,
-            dueDate
-        } = req.body;
+        try {
+            console.log('Request body:', req.body);
+            console.log('Files:', req.files);
 
-        // Handle uploaded files
-        const files = req.files ? req.files.map(file => ({
-            filename: file.filename,
-            originalName: file.originalname,
-            path: file.path,
-            mimetype: file.mimetype,
-            size: file.size
-        })) : [];
+            // Create request object
+            const requestData = {
+                title: req.body.title,
+                description: req.body.description || req.body.content,
+                requestType: req.body.requestType || req.body.type,
+                priority: req.body.priority,
+                department: req.body.department,
+                attachments: req.files ? req.files.map(file => ({
+                    filename: file.filename,
+                    originalName: file.originalname,
+                    path: file.path,
+                    mimetype: file.mimetype
+                })) : []
+            };
 
-        // Create new request
-        const newRequest = new Request({
-            title,
-            description,
-            requestType,
-            priority,
-            status: 'Draft',
-            files,
-            customFields: customFields || {},
-            dueDate: dueDate ? new Date(dueDate) : undefined,
-            metadata: {
-                createdFrom: 'web',
-                version: 1
-            }
-        });
+            // Save to database
+            const newRequest = await Request.create(requestData);
 
-        await newRequest.save();
-
-        logger.info('Request created', {
-            requestId: newRequest._id,
-            processingTime: Date.now() - startTime,
-            filesCount: files.length
-        });
-
-        res.status(201).json({
-            status: 'success',
-            message: 'Request created successfully',
-            data: newRequest
-        });
+            res.status(201).json({
+                status: 'success',
+                data: newRequest
+            });
+        } catch (error) {
+            console.error('Error creating request:', error);
+            res.status(500).json({
+                status: 'error',
+                message: error.message
+            });
+        }
     })
 );
 

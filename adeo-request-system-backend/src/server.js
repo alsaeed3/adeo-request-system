@@ -1,3 +1,5 @@
+// server.js - Part 1: Initial Setup and Imports
+
 import express from 'express';
 import mongoose from 'mongoose';
 import cors from 'cors';
@@ -13,6 +15,7 @@ import morgan from 'morgan';
 import requestRoutes from './routes/requestRoutes.js';
 import { connectDB } from './config/database.js';
 import errorHandler from './middleware/errorHandler.js';
+import fs from 'fs';
 
 // Get current directory (needed for ES modules)
 const __filename = fileURLToPath(import.meta.url);
@@ -24,88 +27,125 @@ dotenv.config();
 // Initialize express app
 const app = express();
 
-// Security middleware
-app.use(helmet());
+// Define allowed origins BEFORE cors configuration
+const allowedOrigins = [
+    'http://localhost:5173',  // Vite's default port
+    'http://localhost:5174',  // Alternative Vite port
+    process.env.FRONTEND_URL
+].filter(Boolean);
 
-// Compression middleware
-app.use(compression());
+// CORS configuration
+const corsOptions = {
+    origin: 'http://localhost:5173', // Your Vite frontend URL
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Accept', 'Authorization'],
+    optionsSuccessStatus: 200
+};
 
-app.use(cors());  // Enable CORS
+// Apply CORS first
+app.use(cors(corsOptions));
+
+// Basic middleware setup - MOVE THESE BEFORE ROUTES
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-app.use(express.json({ limit:process.env.URLENCODED_BODY_LIMIT || "10mb" }));
+app.use(helmet());
+app.use(compression());
 
-// Enhanced rate limiting with configurable options
+// Logging middleware
+app.use((req, res, next) => {
+    console.log(`Received ${req.method} request for ${req.url}`);
+    console.log('Request headers:', req.headers);  // Add this to debug
+    console.log('Request body:', req.body);
+    next();
+});
+
+// Enhanced rate limiting
 const limiter = rateLimit({
-    windowMs: process.env.RATE_LIMIT_WINDOW || 15 * 60 * 1000, // Configurable window (default 15 minutes)
-    max: process.env.RATE_LIMIT_MAX || 100, // Configurable max requests
+    windowMs: parseInt(process.env.RATE_LIMIT_WINDOW) || 15 * 60 * 1000,
+    max: parseInt(process.env.RATE_LIMIT_MAX) || 100,
     message: 'Too many requests from this IP, please try again later',
     standardHeaders: true,
     legacyHeaders: false,
 });
 app.use('/api/', limiter);
 
-// Configure multer with environment variables
-const ALLOWED_FILE_TYPES = (process.env.ALLOWED_FILE_TYPES || 'image/jpeg,image/png,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document').split(',');
-const MAX_FILE_SIZE = parseInt(process.env.MAX_FILE_SIZE || '5') * 1024 * 1024; // Configurable size in MB
+// server.js - Part 2: File Upload Configuration
 
-// Enhanced storage configuration
+// File upload configuration
+const ALLOWED_FILE_TYPES = (process.env.ALLOWED_FILE_TYPES || 'image/jpeg,image/png,application/pdf').split(',');
+const MAX_FILE_SIZE = parseInt(process.env.MAX_FILE_SIZE || '5') * 1024 * 1024;
+
+// Ensure uploads directory exists
+const uploadDir = path.join(__dirname, '..', 'uploads');
+if (!fs.existsSync(uploadDir)) {
+    fs.mkdirSync(uploadDir, { recursive: true });
+}
+
 const storage = multer.diskStorage({
     destination: function (req, file, cb) {
-      cb(null, 'uploads/');
+        cb(null, uploadDir);
     },
     filename: function (req, file, cb) {
-      const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-      cb(null, uniqueSuffix + '-' + file.originalname);
+        const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+        cb(null, `${uniqueSuffix}-${file.originalname}`);
     }
-  });
-  
+});
 
 const fileFilter = (req, file, cb) => {
-    if (!ALLOWED_FILE_TYPES.includes(file.mimetype)) {
+    const allowedTypes = [
+        'image/jpeg',
+        'image/png',
+        'application/pdf',
+        'application/msword',
+        'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+    ];
+    
+    if (allowedTypes.includes(file.mimetype)) {
+        cb(null, true);
+    } else {
         cb(new Error('Invalid file type'), false);
-        return;
     }
-    cb(null, true);
 };
 
+const upload = multer({
+    storage: storage,
+    fileFilter: fileFilter,
+    limits: {
+        fileSize: 10 * 1024 * 1024, // 10MB
+        files: 5 // maximum 5 files
+    }
+});
 
-const upload = multer({ storage: storage });
-
-// Enhanced logging configuration
+// Logging configuration
 const morganFormat = process.env.NODE_ENV === 'production' ? 'combined' : 'dev';
 const morganOptions = {
     skip: (req, res) => process.env.NODE_ENV === 'production' && res.statusCode < 400,
     stream: process.env.LOG_TO_FILE ? 
-        require('fs').createWriteStream(path.join(__dirname, '..', 'logs', 'access.log'), { flags: 'a' }) 
+        require('fs').createWriteStream(path.join(__dirname, 'logs', 'access.log'), { flags: 'a' }) 
         : process.stdout
 };
 app.use(morgan(morganFormat, morganOptions));
 
+// server.js - Part 3: Middleware and Routes
+
 // Enhanced CORS configuration
 app.use(cors({
-    origin: process.env.FRONTEND_URL || 'http://localhost:5174', // Updated default port
-    methods: process.env.ALLOWED_METHODS || ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-    allowedHeaders: process.env.ALLOWED_HEADERS || ['Content-Type', 'Authorization'],
+    origin: process.env.FRONTEND_URL || 'http://localhost:5174',
+    methods: process.env.ALLOWED_METHODS?.split(',') || ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: process.env.ALLOWED_HEADERS?.split(',') || ['Content-Type', 'Authorization'],
     credentials: true,
     maxAge: parseInt(process.env.CORS_MAX_AGE || '86400')
 }));
 
-// Body parser with configurable limits
-app.use(express.json({ limit: process.env.JSON_BODY_LIMIT || '1mb' }));
-app.use(express.urlencoded({ 
-    extended: true, 
-    limit: process.env.URLENCODED_BODY_LIMIT || '1mb' 
-}));
-
-// Enhanced static file serving
+// Static file serving with security headers
 app.use('/uploads', (req, res, next) => {
     res.setHeader('Content-Security-Policy', process.env.CSP_POLICY || "default-src 'self'");
     res.setHeader('X-Content-Type-Options', 'nosniff');
     next();
-}, express.static(path.join(__dirname, '..', process.env.UPLOAD_DIR || 'uploads')));
+}, express.static(path.join(__dirname, process.env.UPLOAD_DIR || 'uploads')));
 
-// Enhanced health check
+// Health check endpoint
 app.get('/health', (req, res) => {
     const healthCheck = {
         status: 'healthy',
@@ -118,45 +158,53 @@ app.get('/health', (req, res) => {
     res.status(200).json(healthCheck);
 });
 
-// Enhanced file upload middleware
-app.use('/api/requests', (req, res, next) => {
-    if (req.method === 'POST') {
-        upload.array('files')(req, res, (err) => {
-            if (err instanceof multer.MulterError) {
-                return res.status(400).json({
-                    error: 'File upload error',
-                    message: err.message,
-                    code: err.code
-                });
-            } else if (err) {
-                return res.status(400).json({
-                    error: 'Invalid file',
-                    message: err.message
-                });
-            }
-            next();
-        });
-    } else {
-        next();
-    }
+// Add this debugging middleware
+app.use((req, res, next) => {
+    console.log('\n=== Request Debug ===');
+    console.log('Method:', req.method);
+    console.log('URL:', req.url);
+    console.log('Headers:', req.headers);
+    console.log('Content-Type:', req.headers['content-type']);
+    console.log('Body:', req.body);
+    console.log('===================\n');
+    next();
 });
+
+// File upload middleware for /api/requests endpoint
+app.post('/api/requests', (req, res, next) => {
+    upload(req, res, function(err) {
+        if (err instanceof multer.MulterError) {
+            // A Multer error occurred when uploading
+            console.error('Multer error:', err);
+            return res.status(400).json({
+                status: 'error',
+                message: 'File upload error',
+                error: err
+            });
+        } else if (err) {
+            // An unknown error occurred
+            console.error('Unknown error:', err);
+            return res.status(500).json({
+                status: 'error',
+                message: 'Unknown error occurred',
+                error: err
+            });
+        }
+        
+        // Log the processed request
+        console.log('Processed request:');
+        console.log('Files:', req.files);
+        console.log('Body:', req.body);
+        
+        next();
+    });
+}, requestRoutes);
 
 // Routes
 app.use('/api/requests', requestRoutes);
 
-// Error handling middleware
-app.use((err, req, res, next) => {
-    console.error(err.stack);
-    res.status(500).send('Something broke!');
-  });
-  
-  const PORT = process.env.PORT || 3000;
-  app.listen(PORT, () => {
-    console.log(`Server running in ${process.env.NODE_ENV || 'development'} mode on port ${PORT}`);
-  });
-
-// Enhanced 404 handler
-app.use((req, res, next) => {
+// 404 handler
+app.use((req, res) => {
     res.status(404).json({
         error: 'Not Found',
         message: 'The requested resource was not found',
@@ -164,10 +212,12 @@ app.use((req, res, next) => {
     });
 });
 
-// Error Handler
+// Error handler
 app.use(errorHandler);
 
-// Enhanced graceful shutdown
+// server.js - Part 4: Server Startup and Shutdown
+
+// Graceful shutdown handler
 async function gracefulShutdown(signal) {
     console.log(`Received ${signal} signal`);
     
@@ -178,13 +228,11 @@ async function gracefulShutdown(signal) {
     }, shutdownTimeout);
 
     try {
-        // Close the Express server
         await new Promise((resolve) => {
             server.close(resolve);
             console.log('Express server closed');
         });
 
-        // Close database connection
         await mongoose.connection.close();
         console.log('Database connection closed');
 
@@ -196,11 +244,7 @@ async function gracefulShutdown(signal) {
     }
 }
 
-// Enhanced signal handling
-process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
-process.on('SIGINT', () => gracefulShutdown('SIGINT'));
-
-// Port configuration with fallback and automatic port finding
+// Start server with automatic port finding
 const startServer = async (retries = 5) => {
     const basePort = parseInt(process.env.PORT || '3000');
     
@@ -214,15 +258,6 @@ const startServer = async (retries = 5) => {
                 }
             });
             
-            server.on('error', (error) => {
-                if (error.code === 'EADDRINUSE') {
-                    console.log(`Port ${port} is in use, trying next port...`);
-                    server.close();
-                } else {
-                    console.error('Server error:', error);
-                }
-            });
-
             return server;
         } catch (err) {
             if (i === retries - 1) {
@@ -233,23 +268,35 @@ const startServer = async (retries = 5) => {
     }
 };
 
-// Start the server
-const server = await startServer();
+// Connect to database and start server
+try {
+    await connectDB();
+    console.log('Connected to database');
+    const server = await startServer();
 
-// Handle unhandled promise rejections
-process.on('unhandledRejection', (err) => {
-    console.error('Unhandled Promise Rejection:', err);
-    if (process.env.NODE_ENV === 'production') {
-        gracefulShutdown('UNHANDLED_REJECTION');
-    }
-});
+    // Signal handlers
+    process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
+    process.on('SIGINT', () => gracefulShutdown('SIGINT'));
 
-// Handle uncaught exceptions
-process.on('uncaughtException', (err) => {
-    console.error('Uncaught Exception:', err);
-    if (process.env.NODE_ENV === 'production') {
-        gracefulShutdown('UNCAUGHT_EXCEPTION');
-    }
-});
+    // Unhandled rejection handler
+    process.on('unhandledRejection', (err) => {
+        console.error('Unhandled Promise Rejection:', err);
+        if (process.env.NODE_ENV === 'production') {
+            gracefulShutdown('UNHANDLED_REJECTION');
+        }
+    });
 
+    // Uncaught exception handler
+    process.on('uncaughtException', (err) => {
+        console.error('Uncaught Exception:', err);
+        if (process.env.NODE_ENV === 'production') {
+            gracefulShutdown('UNCAUGHT_EXCEPTION');
+        }
+    });
 
+} catch (error) {
+    console.error('Failed to start server:', error);
+    process.exit(1);
+}
+
+export default app;

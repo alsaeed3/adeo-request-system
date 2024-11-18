@@ -48,23 +48,76 @@ export function RequestForm() {
     },
   });
 
-  const onSubmit = (data: RequestFormData) => {
-    const formData = new FormData();
-    Object.entries(data).forEach(([key, value]) => {
-      if (key !== 'files') {
-        formData.append(key, value);
-      }
-    });
-    
-    files.forEach((file) => {
-      formData.append('files', file);
-    });
+  const onSubmit = async (data: RequestFormData) => {
+    try {
+      const formData = new FormData();
+      
+      // Add form fields
+      formData.append('title', data.title);
+      formData.append('description', data.content);
+      formData.append('requestType', data.type);
+      formData.append('priority', data.priority);
+      formData.append('department', data.department);
 
-    createRequest(formData, {
-      onSuccess: () => {
-        navigate('/requests');
-      },
-    });
+      // Add files
+      if (files.length > 0) {
+        files.forEach(file => {
+          formData.append('files', file);
+        });
+      }
+
+      const response = await fetch('http://localhost:3000/api/requests', {
+        method: 'POST',
+        body: formData,
+        credentials: 'include',
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to create request');
+      }
+
+      navigate('/requests');
+    } catch (error) {
+      console.error('Error creating request:', error);
+      // Handle error (show error message to user)
+    }
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (files) {
+        const fileArray = Array.from(files);
+        
+        // Validate file types and sizes
+        const invalidFile = fileArray.find(file => {
+            const validTypes = [
+                'image/jpeg',
+                'image/png',
+                'application/pdf',
+                'application/msword',
+                'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+            ];
+            
+            if (!validTypes.includes(file.type)) {
+                return true;
+            }
+            
+            if (file.size > 10 * 1024 * 1024) { // 10MB
+                return true;
+            }
+            
+            return false;
+        });
+
+        if (invalidFile) {
+            e.target.value = '';
+            // Show error message
+            return;
+        }
+
+        setFiles(fileArray);
+    }
   };
 
   return (
@@ -188,12 +241,7 @@ export function RequestForm() {
                 <Input
                   type="file"
                   multiple
-                  onChange={(e) => {
-                    const fileList = e.target.files;
-                    if (fileList) {
-                      setFiles(Array.from(fileList));
-                    }
-                  }}
+                  onChange={handleFileChange}
                 />
               </FormControl>
               <FormDescription>
