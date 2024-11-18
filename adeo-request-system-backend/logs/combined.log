@@ -1,0 +1,2 @@
+{"body":{},"error":{"status":"error","statusCode":500,"storageErrors":[]},"level":"error","message":"Error occurred:","method":"POST","path":"/api/requests","query":{},"service":"error-handler","timestamp":"2024-11-18T14:35:58.022Z","user":"anonymous"}
+{"body":{},"error":{"status":"error","statusCode":500,"storageErrors":[]},"level":"error","message":"Error occurred:","method":"POST","path":"/api/requests","query":{},"service":"error-handler","timestamp":"2024-11-18T14:36:29.348Z","user":"anonymous"}
