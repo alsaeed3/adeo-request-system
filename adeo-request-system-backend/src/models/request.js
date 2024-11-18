@@ -1,307 +1,556 @@
-// models/request.js
 import mongoose from 'mongoose';
+const { Schema } = mongoose;
 
-const requestSchema = new mongoose.Schema({
-    // Basic Information
+// Define custom types
+const CustomDataSchema = new Schema({
+    label: { type: String, required: true },
+    value: { type: Schema.Types.Mixed, required: true },
+    type: { type: String, required: true },
+    options: [{ type: Schema.Types.Mixed }],
+    validation: {
+        required: { type: Boolean, default: false },
+        min: Number,
+        max: Number,
+        pattern: String,
+        customValidation: String
+    }
+}, { _id: false });
+
+// Define history entry schema
+const HistoryEntrySchema = new Schema({
+    timestamp: { type: Date, default: Date.now },
+    user: {
+        type: Schema.Types.ObjectId,
+        ref: 'User',
+        required: true
+    },
+    action: { type: String, required: true },
+    field: String,
+    previousValue: Schema.Types.Mixed,
+    newValue: Schema.Types.Mixed,
+    comment: String
+}, { _id: false });
+
+// Start of the main RequestSchema
+const RequestSchema = new Schema({
+    requestNumber: {
+        type: String,
+        required: true,
+        unique: true
+    },
     title: {
         type: String,
-        required: [true, 'Title is required'],
-        trim: true,
-        maxLength: [200, 'Title cannot exceed 200 characters']
+        required: true,
+        trim: true
     },
-    department: {
+    description: {
         type: String,
-        required: [true, 'Department is required'],
-        enum: {
-            values: [
-                'Urban Planning',
-                'Transportation',
-                'Healthcare',
-                'Education',
-                'Environment',
-                'Economic Development',
-                'Public Safety',
-                'Housing',
-                'Culture and Tourism',
-                'Social Services'
-            ],
-            message: '{VALUE} is not a valid department'
-        }
+        required: true
     },
-    type: {
-        type: String,
-        required: [true, 'Request type is required'],
-        enum: {
-            values: [
-                'Policy Proposal',
-                'Budget Request',
-                'Project Implementation',
-                'Emergency Request',
-                'Research Study',
-                'Infrastructure Development',
-                'Program Initiative',
-                'Regulatory Change',
-                'Service Enhancement',
-                'Strategic Planning'
-            ],
-            message: '{VALUE} is not a valid request type'
-        }
-    },
-    content: {
-        type: String,
-        required: [true, 'Content is required'],
-        minLength: [50, 'Content must be at least 50 characters long'],
-        maxLength: [10000, 'Content cannot exceed 10000 characters']
-    },
-
-    // Status and Tracking
     status: {
         type: String,
-        enum: {
-            values: ['draft', 'pending', 'processing', 'processed', 'approved', 'rejected', 'on-hold'],
-            message: '{VALUE} is not a valid status'
-        },
-        default: 'pending'
+        required: true,
+        enum: ['Draft', 'Pending', 'In Review', 'Approved', 'Rejected', 'Cancelled', 'Completed'],
+        default: 'Draft'
+    }
+}, { timestamps: true });
+
+// Continuing from previous RequestSchema definition...
+
+RequestSchema.add({
+    // Requester Information
+    requester: {
+        type: Schema.Types.ObjectId,
+        ref: 'User',
+        required: true
     },
-    priority: {
-        type: String,
-        enum: {
-            values: ['low', 'medium', 'high', 'urgent'],
-            message: '{VALUE} is not a valid priority level'
-        },
-        default: 'medium'
+    requesterDepartment: {
+        type: Schema.Types.ObjectId,
+        ref: 'Department'
     },
-    referenceNumber: {
-        type: String,
-        unique: true,
-        default: function() {
-            return 'REQ-' + Date.now().toString(36).toUpperCase() + 
-                   Math.random().toString(36).substring(2, 5).toUpperCase();
-        }
+    
+    // Assignee Information
+    assignedTo: {
+        type: Schema.Types.ObjectId,
+        ref: 'User'
+    },
+    assignedDepartment: {
+        type: Schema.Types.ObjectId,
+        ref: 'Department'
     },
 
-    // Dates
-    submissionDate: {
-        type: Date,
-        default: Date.now
+    // Teams and Groups
+    responsibleTeam: {
+        type: Schema.Types.ObjectId,
+        ref: 'Team'
     },
-    lastUpdated: {
-        type: Date,
-        default: Date.now
-    },
-    targetCompletionDate: {
-        type: Date
-    },
-
-    // Files and Attachments
-    files: [{
-        filename: {
+    stakeholders: [{
+        user: {
+            type: Schema.Types.ObjectId,
+            ref: 'User'
+        },
+        role: {
             type: String,
-            required: true
+            enum: ['Reviewer', 'Observer', 'Contributor']
         },
-        path: {
-            type: String,
-            required: true
-        },
-        mimetype: {
-            type: String,
-            required: true
-        },
-        size: {
-            type: Number
-        },
-        uploadDate: {
-            type: Date,
-            default: Date.now
+        notifications: {
+            email: { type: Boolean, default: true },
+            inApp: { type: Boolean, default: true }
         }
     }],
 
-    // Analysis and Recommendations
-    analysis: {
-        summary: {
-            type: String,
-            maxLength: [2000, 'Analysis summary cannot exceed 2000 characters']
-        },
-        trends: [{
-            type: String,
-            maxLength: [500, 'Individual trend cannot exceed 500 characters']
-        }],
-        impactAssessment: {
-            type: Map,
-            of: String
-        },
-        policyAlignment: {
-            type: Map,
-            of: String
-        },
-        riskLevel: {
-            type: String,
-            enum: ['low', 'medium', 'high', 'critical'],
-            default: 'medium'
-        }
+    // Request Type and Category
+    requestType: {
+        type: Schema.Types.ObjectId,
+        ref: 'RequestType',
+        required: true
+    },
+    category: {
+        type: Schema.Types.ObjectId,
+        ref: 'Category',
+        required: true
+    },
+    subCategory: {
+        type: Schema.Types.ObjectId,
+        ref: 'Category'
     },
 
-    recommendations: {
-        strategic: [{
+    // Priority and Due Dates
+    priority: {
+        type: String,
+        enum: ['Low', 'Medium', 'High', 'Urgent'],
+        default: 'Medium'
+    },
+    dueDate: Date,
+    targetCompletionDate: Date,
+    actualCompletionDate: Date,
+
+    // Time Tracking
+    timeEstimate: {
+        value: Number,
+        unit: {
             type: String,
-            maxLength: [1000, 'Strategic recommendation cannot exceed 1000 characters']
-        }],
-        operational: [{
+            enum: ['minutes', 'hours', 'days'],
+            default: 'hours'
+        }
+    },
+    timeSpent: {
+        value: Number,
+        unit: {
             type: String,
-            maxLength: [1000, 'Operational recommendation cannot exceed 1000 characters']
-        }],
-        timeline: {
-            type: String,
-            maxLength: [1000, 'Timeline cannot exceed 1000 characters']
+            enum: ['minutes', 'hours', 'days'],
+            default: 'hours'
+        }
+    }
+});
+
+// Continuing RequestSchema additions...
+
+RequestSchema.add({
+    // Custom Fields
+    customFields: {
+        type: Map,
+        of: CustomDataSchema
+    },
+    
+    // Dynamic Form Data
+    formData: {
+        type: Map,
+        of: Schema.Types.Mixed,
+        default: new Map()
+    },
+
+    // Attachments
+    attachments: [{
+        filename: { type: String, required: true },
+        originalName: { type: String, required: true },
+        mimeType: { type: String, required: true },
+        size: { type: Number, required: true },
+        path: { type: String, required: true },
+        uploadedBy: {
+            type: Schema.Types.ObjectId,
+            ref: 'User',
+            required: true
         },
-        risks: [{
+        uploadedAt: {
+            type: Date,
+            default: Date.now
+        },
+        metadata: {
+            type: Map,
+            of: String
+        },
+        tags: [String]
+    }],
+
+    // Comments and Discussions
+    comments: [{
+        content: {
             type: String,
-            maxLength: [500, 'Risk description cannot exceed 500 characters']
+            required: true
+        },
+        author: {
+            type: Schema.Types.ObjectId,
+            ref: 'User',
+            required: true
+        },
+        timestamp: {
+            type: Date,
+            default: Date.now
+        },
+        edited: {
+            isEdited: { type: Boolean, default: false },
+            editedAt: Date,
+            originalContent: String
+        },
+        attachments: [{
+            filename: String,
+            path: String,
+            mimeType: String
         }],
-        budgetImplications: {
+        mentions: [{
+            user: {
+                type: Schema.Types.ObjectId,
+                ref: 'User'
+            },
+            notified: { type: Boolean, default: false }
+        }],
+        parentComment: {
+            type: Schema.Types.ObjectId
+        },
+        reactions: [{
+            user: {
+                type: Schema.Types.ObjectId,
+                ref: 'User'
+            },
+            type: {
+                type: String,
+                enum: ['like', 'heart', 'smile', 'thumbsup', 'thumbsdown']
+            }
+        }]
+    }],
+
+    // Tracking History
+    history: [HistoryEntrySchema],
+
+    // Internal Notes
+    internalNotes: [{
+        content: { type: String, required: true },
+        author: {
+            type: Schema.Types.ObjectId,
+            ref: 'User',
+            required: true
+        },
+        timestamp: {
+            type: Date,
+            default: Date.now
+        },
+        visibility: {
             type: String,
-            maxLength: [1000, 'Budget implications cannot exceed 1000 characters']
+            enum: ['department', 'team', 'admin', 'all'],
+            default: 'department'
+        }
+    }]
+});
+
+// Continuing RequestSchema additions...
+
+RequestSchema.add({
+    // Workflow Configuration
+    workflow: {
+        currentStage: {
+            type: String,
+            required: true,
+            default: 'initial'
+        },
+        stages: [{
+            name: { type: String, required: true },
+            order: { type: Number, required: true },
+            type: {
+                type: String,
+                enum: ['approval', 'review', 'implementation', 'validation', 'custom'],
+                required: true
+            },
+            status: {
+                type: String,
+                enum: ['pending', 'in-progress', 'completed', 'skipped', 'failed'],
+                default: 'pending'
+            },
+            assignedTo: {
+                type: Schema.Types.ObjectId,
+                ref: 'User'
+            },
+            dueDate: Date,
+            completedAt: Date,
+            notes: String
+        }],
+        isLocked: { type: Boolean, default: false }
+    },
+
+    // Approval Chain
+    approvals: [{
+        stage: { type: String, required: true },
+        approver: {
+            type: Schema.Types.ObjectId,
+            ref: 'User',
+            required: true
+        },
+        status: {
+            type: String,
+            enum: ['pending', 'approved', 'rejected', 'delegated'],
+            default: 'pending'
+        },
+        decision: {
+            timestamp: Date,
+            comment: String,
+            attachments: [{
+                filename: String,
+                path: String
+            }]
+        },
+        delegatedTo: {
+            user: {
+                type: Schema.Types.ObjectId,
+                ref: 'User'
+            },
+            reason: String,
+            timestamp: Date
+        },
+        requiredLevel: {
+            type: String,
+            enum: ['department', 'division', 'executive', 'board'],
+            required: true
+        }
+    }],
+
+    // SLA Tracking
+    sla: {
+        targetResolutionTime: {
+            value: Number,
+            unit: {
+                type: String,
+                enum: ['hours', 'days', 'weeks'],
+                required: true
+            }
+        },
+        actualResolutionTime: Number,
+        breached: { type: Boolean, default: false },
+        pauseHistory: [{
+            startTime: Date,
+            endTime: Date,
+            reason: String,
+            initiatedBy: {
+                type: Schema.Types.ObjectId,
+                ref: 'User'
+            }
+        }],
+        notifications: [{
+            type: {
+                type: String,
+                enum: ['warning', 'breach', 'update'],
+                required: true
+            },
+            timestamp: Date,
+            sentTo: [{
+                type: Schema.Types.ObjectId,
+                ref: 'User'
+            }]
+        }]
+    },
+
+    // Metrics and Tracking
+    metrics: {
+        responseTime: Number,
+        processingTime: Number,
+        totalPauseTime: Number,
+        reopenCount: { type: Number, default: 0 },
+        escalationCount: { type: Number, default: 0 },
+        lastActivity: Date,
+        customMetrics: {
+            type: Map,
+            of: Schema.Types.Mixed
+        }
+    }
+});
+
+// Continuing RequestSchema additions...
+
+RequestSchema.add({
+    // Integration Settings
+    integrations: {
+        externalSystems: [{
+            systemName: { type: String, required: true },
+            externalId: String,
+            status: {
+                type: String,
+                enum: ['active', 'pending', 'failed', 'archived']
+            },
+            lastSync: Date,
+            syncData: {
+                type: Map,
+                of: Schema.Types.Mixed
+            },
+            mappings: {
+                type: Map,
+                of: String
+            }
+        }],
+        webhooks: [{
+            url: String,
+            events: [String],
+            active: Boolean,
+            secret: String,
+            lastTrigger: Date
+        }]
+    },
+
+    // Flags and Settings
+    flags: {
+        isArchived: { type: Boolean, default: false },
+        isConfidential: { type: Boolean, default: false },
+        requiresFollowUp: { type: Boolean, default: false },
+        isTemplate: { type: Boolean, default: false },
+        customFlags: {
+            type: Map,
+            of: Boolean
         }
     },
 
     // Metadata
     metadata: {
-        processingVersion: {
-            type: String
-        },
-        processingDuration: {
-            type: Number // in milliseconds
-        },
-        aiModelUsed: {
-            type: String
-        },
-        confidentialityLevel: {
+        createdFrom: {
             type: String,
-            enum: ['public', 'internal', 'confidential', 'restricted'],
-            default: 'internal'
+            enum: ['web', 'mobile', 'email', 'api', 'import'],
+            required: true
+        },
+        lastModifiedBy: {
+            type: Schema.Types.ObjectId,
+            ref: 'User'
+        },
+        version: { type: Number, default: 1 },
+        tags: [String],
+        customMetadata: {
+            type: Map,
+            of: Schema.Types.Mixed
         }
-    },
-
-    // Workflow and Approval
-    workflow: {
-        currentStage: {
-            type: String,
-            enum: ['initial-review', 'analysis', 'recommendation', 'final-approval', 'implementation'],
-            default: 'initial-review'
-        },
-        approvers: [{
-            name: String,
-            role: String,
-            decision: {
-                type: String,
-                enum: ['pending', 'approved', 'rejected']
-            },
-            comments: String,
-            date: Date
-        }],
-        history: [{
-            action: String,
-            performedBy: String,
-            date: {
-                type: Date,
-                default: Date.now
-            },
-            comments: String
-        }]
-    },
-
-    // Relationships
-    relatedRequests: [{
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'Request'
-    }],
-    parentRequest: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'Request'
     }
-}, {
-    timestamps: true, // Automatically add createdAt and updatedAt fields
-    strict: true, // Only allow fields defined in the schema
-    strictQuery: false // Allow flexible querying
-});
-
-// Indexes for improved query performance
-requestSchema.index({ department: 1, status: 1 });
-requestSchema.index({ submissionDate: -1 });
-requestSchema.index({ referenceNumber: 1 }, { unique: true });
-requestSchema.index({ 'workflow.currentStage': 1 });
-requestSchema.index({ title: 'text', content: 'text' }); // Text search index
-
-// Pre-save middleware
-requestSchema.pre('save', function(next) {
-    this.lastUpdated = new Date();
-    next();
-});
-
-// Virtual for time since submission
-requestSchema.virtual('timeSinceSubmission').get(function() {
-    return Date.now() - this.submissionDate;
 });
 
 // Methods
-requestSchema.methods = {
-    // Check if request is overdue
-    isOverdue() {
-        if (this.targetCompletionDate) {
-            return Date.now() > this.targetCompletionDate;
-        }
-        return false;
-    },
-
-    // Add workflow history entry
-    addToHistory(action, performedBy, comments) {
-        this.workflow.history.push({
-            action,
-            performedBy,
-            comments,
-            date: new Date()
-        });
-        return this.save();
-    },
-
-    // Update request status with history tracking
-    async updateStatus(newStatus, performedBy, comments) {
+RequestSchema.methods = {
+    async updateStatus(newStatus, userId, comment) {
+        const oldStatus = this.status;
         this.status = newStatus;
-        this.lastUpdated = new Date();
-        await this.addToHistory(`Status updated to ${newStatus}`, performedBy, comments);
+        
+        this.history.push({
+            user: userId,
+            action: 'statusChange',
+            field: 'status',
+            previousValue: oldStatus,
+            newValue: newStatus,
+            comment: comment
+        });
+
+        await this.save();
+        return this;
+    },
+
+    async addComment(content, userId, attachments = []) {
+        this.comments.push({
+            content,
+            author: userId,
+            attachments
+        });
+        
+        await this.save();
+        return this.comments[this.comments.length - 1];
+    },
+
+    async processApproval(approverId, decision, comment) {
+        const approval = this.approvals.find(a => 
+            a.approver.toString() === approverId.toString() && 
+            a.status === 'pending'
+        );
+        
+        if (approval) {
+            approval.status = decision;
+            approval.decision = {
+                timestamp: new Date(),
+                comment
+            };
+            await this.save();
+        }
+        return approval;
     }
 };
 
-// Statics
-requestSchema.statics = {
-    // Find requests by department with status summary
-    async getDepartmentSummary(department) {
+// Static methods
+RequestSchema.statics = {
+    async findByRequestNumber(requestNumber) {
+        return this.findOne({ requestNumber })
+            .populate('requester')
+            .populate('assignedTo')
+            .populate('stakeholders.user');
+    },
+
+    async getMetrics(startDate, endDate) {
         return this.aggregate([
-            { $match: { department } },
+            {
+                $match: {
+                    createdAt: { 
+                        $gte: startDate, 
+                        $lte: endDate 
+                    }
+                }
+            },
             {
                 $group: {
                     _id: '$status',
-                    count: { $sum: 1 }
+                    count: { $sum: 1 },
+                    avgProcessingTime: { $avg: '$metrics.processingTime' }
                 }
             }
         ]);
-    },
-
-    // Find similar requests
-    async findSimilar(requestId) {
-        const request = await this.findById(requestId);
-        if (!request) return [];
-
-        return this.find({
-            $text: { 
-                $search: request.title + ' ' + request.content 
-            },
-            _id: { $ne: requestId },
-            department: request.department
-        }).limit(5);
     }
 };
 
-// Export both model and schema
-export const Request = mongoose.model('Request', requestSchema);
-export const RequestSchema = requestSchema;
+// Middleware
+RequestSchema.pre('save', async function(next) {
+    if (this.isNew) {
+        const lastRequest = await this.constructor.findOne({})
+            .sort('-requestNumber')
+            .select('requestNumber');
+            
+        const nextNumber = lastRequest 
+            ? String(Number(lastRequest.requestNumber) + 1).padStart(6, '0')
+            : '000001';
+            
+        this.requestNumber = nextNumber;
+    }
+
+    if (this.isModified()) {
+        this.metadata.version += 1;
+    }
+
+    next();
+});
+
+// Indexes
+RequestSchema.index({ requestNumber: 1 }, { unique: true });
+RequestSchema.index({ status: 1 });
+RequestSchema.index({ createdAt: 1 });
+RequestSchema.index({ 'requester': 1 });
+RequestSchema.index({ 'assignedTo': 1 });
+RequestSchema.index({ 'requestType': 1 });
+RequestSchema.index({ 'category': 1 });
+RequestSchema.index({ 'workflow.currentStage': 1 });
+RequestSchema.index({ 'metadata.tags': 1 });
+
+// Virtual fields
+RequestSchema.virtual('isOverdue').get(function() {
+    if (!this.dueDate) return false;
+    return new Date() > this.dueDate;
+});
+
+// Export the model
+export const Request = mongoose.model('Request', RequestSchema);
