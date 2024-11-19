@@ -35,10 +35,9 @@ By doing so, the tool optimizes internal workflows, reduces processing time, and
    - **Trade-off**: Future iterations will address scalability for larger organizations or multiple departments.
 
 ### **What Could Be Done Differently**
-1. **Integration with Collaboration Tools**: Adding integration with Slack, Teams, or task management platforms.
-2. **Enhanced Feedback System**: Expanding feedback to include dynamic suggestions based on organizational standards.
-3. **Data Security Enhancements**: Additional encryption layers for sensitive requests.
-4. **Fine-tuning the AI Model**: Spending more time training the AI on custom datasets relevant to the organization for higher accuracy.
+1. **Enhanced Feedback System**: Expanding feedback to include dynamic suggestions based on organizational standards.
+2. **Data Security Enhancements**: Additional encryption layers for sensitive requests.
+3. **Fine-tuning the AI Model**: Spending more time training the AI on custom datasets relevant to the organization for higher accuracy.
 
 ---
 
