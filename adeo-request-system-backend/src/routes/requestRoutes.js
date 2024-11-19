@@ -240,47 +240,6 @@ const isArabicText = (text) => {
       }
   });
   
-  // Helper function to process AI response - add language awareness
-  function processAIResponse(aiResponse, priority, language = 'en') {
-      // Extract key sections using regex or string splitting
-      const sections = extractSections(aiResponse);
-  
-      // Determine recommendation decision based on content analysis and priority
-      const decision = determineDecision(sections, priority);
-  
-      return {
-          recommendation: {
-              decision: decision,
-              confidence: calculateConfidence(sections, priority),
-              reasoning: extractReasons(sections)
-          },
-          impact: {
-              economic: {
-                  score: calculateImpactScore(sections.economic),
-                  details: extractImpactDetails(sections.economic)
-              },
-              social: {
-                  score: calculateImpactScore(sections.social),
-                  details: extractImpactDetails(sections.social)
-              },
-              environmental: {
-                  score: calculateImpactScore(sections.environmental),
-                  details: extractImpactDetails(sections.environmental)
-              }
-          },
-          suggestedActions: {
-              immediate: extractActions(sections.immediate),
-              longTerm: extractActions(sections.longTerm)
-          },
-          risks: {
-              level: calculateRiskLevel(sections.risks, priority),
-              factors: extractRiskFactors(sections.risks),
-              mitigations: extractMitigations(sections.risks)
-          },
-          language // Add language field to response
-      };
-  }
-
 router.get('/:id', async (req, res) => {
     try {
         const request = await Request.findById(req.params.id);
@@ -377,7 +336,7 @@ router.post('/analyze', async (req, res) => {
 });
 
 // Helper function to process AI response
-function processAIResponse(aiResponse, priority) {
+function processAIResponse(aiResponse, priority, language = 'en') {
     // Extract key sections using regex or string splitting
     const sections = extractSections(aiResponse);
 
@@ -412,7 +371,8 @@ function processAIResponse(aiResponse, priority) {
             level: calculateRiskLevel(sections.risks, priority),
             factors: extractRiskFactors(sections.risks),
             mitigations: extractMitigations(sections.risks)
-        }
+        },
+        language // Add language field to response
     };
 }
 
