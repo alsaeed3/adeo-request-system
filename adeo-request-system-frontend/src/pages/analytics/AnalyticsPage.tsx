@@ -54,12 +54,14 @@ const AnalyticsPage = () => {
   const fetchAnalytics = async () => {
     try {
       setLoading(true);
-      const response = await fetch('/api/requests/analytics', {
+      // Updated URL to match your backend endpoint
+      const response = await fetch('http://localhost:3000/api/requests', {
         method: 'GET',
         headers: {
           'Accept': 'application/json',
           'Content-Type': 'application/json',
         },
+        credentials: 'include', // Include cookies if needed
       });
 
       if (!response.ok) {
@@ -83,7 +85,7 @@ const AnalyticsPage = () => {
       if (!Array.isArray(data)) {
         console.warn('Data is not an array:', data);
         // If it's a single object, wrap it in an array
-        data = [data];
+        data = Array.isArray(data.requests) ? data.requests : [data];
       }
 
       setRequests(data);
