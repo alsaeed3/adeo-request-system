@@ -46,14 +46,13 @@ const generateRequestNumber = async () => {
     }
 };
 
-// POST handler for new requests
 router.post('/', async (req, res) => {
     try {
         console.log('Received POST request with body:', req.body);
-        const { title, description, requestType, priority } = req.body;
+        const { title, description, requestType, priority, department } = req.body;
 
         // Validate required fields
-        if (!title || !description || !requestType || !priority) {
+        if (!title || !description || !requestType || !priority || !department) {
             return res.status(400).json({
                 status: 'error',
                 message: 'Missing required fields'
@@ -63,13 +62,14 @@ router.post('/', async (req, res) => {
         // Generate request number
         const requestNumber = await generateRequestNumber();
 
-        // Create new request object with only the necessary fields
+        // Create new request object with all necessary fields
         const requestData = {
             requestNumber,
             title,
             description,
             requestType,
             priority,
+            department, // Add this line
             status: 'Draft',
             attachments: [],
             metadata: {
