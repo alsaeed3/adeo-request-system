@@ -44,31 +44,33 @@ const NewRequestPage = () => {
     return true;
   };
 
-  const handleSubmit = async (data: RequestFormData) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+
+    if (!validateForm()) {
+        return;
+    }
+
+    setIsLoading(true);
     try {
-        const formData = new FormData();
+        const formDataToSend = new FormData();
         
-        // Add form fields
-        Object.entries(data).forEach(([key, value]) => {
-            if (value !== undefined && value !== null) {
-                formData.append(key, value.toString());
-            }
-        });
+        // Append form fields
+        formDataToSend.append('title', formData.title);
+        formDataToSend.append('description', formData.description);
+        formDataToSend.append('requestType', formData.requestType);
+        formDataToSend.append('priority', formData.priority);
 
         // Add files if any
-        if (files?.length > 0) {
-            files.forEach(file => {
-                formData.append('files', file);
-            });
+        if (formData.attachments) {
+            formDataToSend.append('files', formData.attachments);
         }
 
         const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
-
         const response = await fetch(`${API_URL}/api/requests`, {
             method: 'POST',
-            body: formData,
+            body: formDataToSend,
             credentials: 'include',
-            // Don't set Content-Type header - browser will set it automatically with boundary
         });
 
         if (!response.ok) {
@@ -79,11 +81,14 @@ const NewRequestPage = () => {
         const result = await response.json();
         console.log('Request created successfully:', result);
         
-        // Handle success (e.g., show notification, redirect)
-        
+        // Navigate to requests page after successful submission
+        navigate('/requests');
+
     } catch (error) {
         console.error('Error submitting request:', error);
-        // Handle error (e.g., show error notification)
+        setError(error.message || 'Failed to submit request');
+    } finally {
+        setIsLoading(false);
     }
   };
 
