@@ -16,6 +16,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Loader2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import RequestAnalysis from './RequestAnalysis';
 
 interface RequestDetails {
   _id: string;
@@ -166,92 +167,13 @@ const RequestDetailsPage = () => {
         </CardContent>
       </Card>
 
-      {/* AI Analysis */}
+      {/* Analysis Section */}
       {analysis && (
-        <>
-          {/* Executive Summary */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Executive Summary</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-gray-700">{analysis.analysis.summary}</p>
-              <div className="mt-4">
-                <h4 className="font-semibold mb-2">Key Trends:</h4>
-                <ul className="list-disc pl-5 space-y-1">
-                  {analysis.analysis.trends.map((trend, index) => (
-                    <li key={index} className="text-gray-700">{trend}</li>
-                  ))}
-                </ul>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Recommendations */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Strategic Recommendations</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <ul className="list-disc pl-5 space-y-2">
-                {analysis.recommendations.strategic.map((rec, index) => (
-                  <li key={index} className="text-gray-700">{rec}</li>
-                ))}
-              </ul>
-            </CardContent>
-          </Card>
-
-          {/* Operational Actions */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Implementation Steps</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <ul className="list-disc pl-5 space-y-2">
-                {analysis.recommendations.operational.map((op, index) => (
-                  <li key={index} className="text-gray-700">{op}</li>
-                ))}
-              </ul>
-              <div className="mt-4">
-                <h4 className="font-semibold">Timeline:</h4>
-                <p className="mt-2 text-gray-700">{analysis.recommendations.timeline}</p>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Risk Assessment */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Risk Assessment</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                <div>
-                  <span className="font-semibold">Risk Level: </span>
-                  <Badge variant={
-                    analysis.analysis.riskLevel === 'high' ? 'destructive' :
-                    analysis.analysis.riskLevel === 'medium' ? 'warning' :
-                    'success'
-                  }>
-                    {analysis.analysis.riskLevel.toUpperCase()}
-                  </Badge>
-                </div>
-                <div>
-                  <h4 className="font-semibold mb-2">Identified Risks:</h4>
-                  <ul className="list-disc pl-5 space-y-1">
-                    {analysis.recommendations.risks.map((risk, index) => (
-                      <li key={index} className="text-gray-700">{risk}</li>
-                    ))}
-                  </ul>
-                </div>
-                <div>
-                  <h4 className="font-semibold mb-2">Budget Implications:</h4>
-                  <p className="text-gray-700">{analysis.recommendations.budgetImplications}</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </>
+        <Card>
+          <CardContent className="p-6">
+            <RequestAnalysis analysis={analysis} />
+          </CardContent>
+        </Card>
       )}
     </div>
   );
