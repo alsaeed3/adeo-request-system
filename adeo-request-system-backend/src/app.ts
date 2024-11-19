@@ -1,57 +1,52 @@
-import express from 'express';
-import cors from 'cors';
-import morgan from 'morgan';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { MainLayout } from './components/layout/MainLayout';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import NewRequestPage from './pages/requests/NewRequestPage';
+import RequestsPage from './pages/requests/RequestsPage';
+import RequestDetailsPage from './pages/requests/RequestDetailsPage';
+import { Toaster } from './components/ui/toaster';
+import AnalyticsPage from './pages/analytics/AnalyticsPage';
 
-const app = express();
-
-// Add request logging
-app.use(morgan('dev'));
-
-// Basic middleware
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
-
-// Simple CORS configuration that allows all origins during development
-app.use((req, res, next) => {
-  // Get the origin from the request headers
-  const origin = req.headers.origin;
-  
-  // Log the origin for debugging
-  console.log('Request origin:', origin);
-  
-  // Allow the specific origin
-  if (origin) {
-    res.setHeader('Access-Control-Allow-Origin', origin);
-  }
-  
-  // Essential CORS headers
-  res.setHeader('Access-Control-Allow-Credentials', 'true');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With');
-  
-  // Handle preflight requests
-  if (req.method === 'OPTIONS') {
-    return res.sendStatus(200);
-  }
-  
-  next();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 1000 * 60 * 5, // 5 minutes
+      cacheTime: 1000 * 60 * 30, // 30 minutes
+      refetchOnWindowFocus: false,
+      retry: 1,
+    },
+  },
 });
 
-// Test endpoint
-app.get('/api/health', (req, res) => {
-  res.json({ status: 'ok', timestamp: new Date().toISOString() });
-});
+function App() {
+  return (
+    <QueryClientProvider client={queryClient}>
+      <Router>
+        <Routes>
+          <Route path="/" element={<MainLayout />}>
+            {/* Dashboard route */}
+            <Route index element={<div>Dashboard</div>} />
+            
+            {/* Analytics routes */}
+            <Route path="analytics">
+              <Route index element={<AnalyticsPage />} />
+            </Route>
 
-// Routes
-import requestsRouter from './routes/requests';
-app.use('/api/requests', requestsRouter);
+            {/* Requests routes */}
+            <Route path="requests">
+              <Route path="new" element={<NewRequestPage />} />
+              <Route path=":id" element={<RequestDetailsPage />} />
+              <Route index element={<RequestsPage />} />
+            </Route>
 
-// Error handling
-app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
-  console.error('Error:', err);
-  res.status(err.status || 500).json({
-    message: err.message || 'Internal Server Error'
-  });
-});
+            {/* 404 route */}
+            <Route path="*" element={<div>Page Not Found</div>} />
+          </Route>
+        </Routes>
+        <Toaster />
+      </Router>
+    </QueryClientProvider>
+  );
+}
 
-export default app;
+export default App;

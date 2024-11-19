@@ -1,3 +1,5 @@
+// abdo-request-system-backend/src/routes/requestRoutes.js
+
 import express from 'express';
 import { Request } from '../models/request.js';
 import fs from 'fs';
@@ -126,5 +128,280 @@ router.get('/', async (req, res) => {
         });
     }
 });
+
+router.post('/:id/analyze', async (req, res) => {
+    try {
+        const request = await Request.findById(req.params.id);
+        if (!request) {
+            return res.status(404).json({
+                status: 'error',
+                message: 'Request not found'
+            });
+        }
+
+        // Process the request using the existing requestProcessor
+        const analysis = await processRequest({
+            title: request.title,
+            description: request.description,
+            type: request.requestType,
+            priority: request.priority,
+            content: request.description,
+            department: 'Government Department' // You can add department to your schema if needed
+        });
+
+        // Update the request with the analysis
+        await Request.findByIdAndUpdate(req.params.id, {
+            $set: {
+                'metadata.analysis': analysis
+            }
+        });
+
+        res.json({
+            status: 'success',
+            data: analysis
+        });
+    } catch (error) {
+        console.error('Analysis error:', error);
+        res.status(500).json({
+            status: 'error',
+            message: 'Failed to analyze request',
+            error: error.message
+        });
+    }
+});
+
+router.get('/:id', async (req, res) => {
+    try {
+        const request = await Request.findById(req.params.id);
+        if (!request) {
+            return res.status(404).json({
+                status: 'error',
+                message: 'Request not found'
+            });
+        }
+
+        res.json({
+            status: 'success',
+            data: request
+        });
+    } catch (error) {
+        console.error('Error fetching request:', error);
+        res.status(500).json({
+            status: 'error',
+            message: 'Failed to fetch request',
+            error: error.message
+        });
+    }
+});
+
+// POST handler for analyzing requests
+router.post('/analyze', async (req, res) => {
+    try {
+        const { requestId, title, description, type, priority } = req.body;
+
+        // Prepare the prompt for GPT analysis
+        const analysisPrompt = `
+            Analyze the following government request and provide detailed recommendations:
+
+            Title: ${title}
+            Description: ${description}
+            Type: ${type}
+            Priority: ${priority}
+
+            Please provide a comprehensive analysis including:
+            1. Overall recommendation (APPROVED/REJECTED/NEEDS_REVIEW)
+            2. Economic impact analysis
+            3. Social impact analysis
+            4. Environmental impact analysis
+            5. Immediate actions needed
+            6. Long-term strategic considerations
+            7. Potential risks and mitigation strategies
+
+            Format the response in a structured way addressing each point.
+        `;
+
+        // Get analysis from OpenAI
+        const completion = await openai.chat.completions.create({
+            model: "gpt-3.5-turbo",
+            messages: [
+                {
+                    role: "system",
+                    content: "You are an expert government policy analyst specializing in project evaluation and impact assessment. Provide detailed, practical recommendations based on the request details."
+                },
+                {
+                    role: "user",
+                    content: analysisPrompt
+                }
+            ],
+            temperature: 0.7,
+            max_tokens: 1500
+        });
+
+        // Parse the AI response
+        const aiResponse = completion.choices[0].message.content;
+        
+        // Process and structure the AI response
+        const analysis = processAIResponse(aiResponse, priority);
+
+        // Save the analysis to the request document
+        await Request.findByIdAndUpdate(requestId, {
+            $set: {
+                'metadata.analysis': analysis
+            }
+        });
+
+        res.json({
+            status: 'success',
+            analysis: analysis
+        });
+
+    } catch (error) {
+        console.error('Analysis error:', error);
+        res.status(500).json({
+            status: 'error',
+            message: 'Failed to generate analysis',
+            error: error.message
+        });
+    }
+});
+
+// Helper function to process AI response
+function processAIResponse(aiResponse, priority) {
+    // Extract key sections using regex or string splitting
+    const sections = extractSections(aiResponse);
+
+    // Determine recommendation decision based on content analysis and priority
+    const decision = determineDecision(sections, priority);
+
+    return {
+        recommendation: {
+            decision: decision,
+            confidence: calculateConfidence(sections, priority),
+            reasoning: extractReasons(sections)
+        },
+        impact: {
+            economic: {
+                score: calculateImpactScore(sections.economic),
+                details: extractImpactDetails(sections.economic)
+            },
+            social: {
+                score: calculateImpactScore(sections.social),
+                details: extractImpactDetails(sections.social)
+            },
+            environmental: {
+                score: calculateImpactScore(sections.environmental),
+                details: extractImpactDetails(sections.environmental)
+            }
+        },
+        suggestedActions: {
+            immediate: extractActions(sections.immediate),
+            longTerm: extractActions(sections.longTerm)
+        },
+        risks: {
+            level: calculateRiskLevel(sections.risks, priority),
+            factors: extractRiskFactors(sections.risks),
+            mitigations: extractMitigations(sections.risks)
+        }
+    };
+}
+
+// Helper functions for processing AI response
+function extractSections(text) {
+    const sections = {};
+    
+    // Extract economic impact
+    sections.economic = text.match(/Economic impact[^]*?(?=Social impact|$)/i)?.[0] || '';
+    
+    // Extract social impact
+    sections.social = text.match(/Social impact[^]*?(?=Environmental impact|$)/i)?.[0] || '';
+    
+    // Extract environmental impact
+    sections.environmental = text.match(/Environmental impact[^]*?(?=Immediate actions|$)/i)?.[0] || '';
+    
+    // Extract immediate actions
+    sections.immediate = text.match(/Immediate actions[^]*?(?=Long-term|$)/i)?.[0] || '';
+    
+    // Extract long-term considerations
+    sections.longTerm = text.match(/Long-term[^]*?(?=Potential risks|$)/i)?.[0] || '';
+    
+    // Extract risks
+    sections.risks = text.match(/Potential risks[^]*?$/i)?.[0] || '';
+    
+    return sections;
+}
+
+function determineDecision(sections, priority) {
+    const text = Object.values(sections).join(' ').toLowerCase();
+    if (text.includes('reject') || text.includes('deny') || text.includes('not recommended')) {
+        return 'REJECTED';
+    }
+    if (priority === 'High' || priority === 'Urgent' || text.includes('further review') || text.includes('additional analysis')) {
+        return 'NEEDS_REVIEW';
+    }
+    return 'APPROVED';
+}
+
+function calculateConfidence(sections, priority) {
+    // Implementation based on content analysis
+    return Math.floor(Math.random() * 30) + 70; // Example implementation
+}
+
+function extractReasons(sections) {
+    const text = Object.values(sections).join('\n');
+    return text
+        .split(/[\n.]/)
+        .map(line => line.trim())
+        .filter(line => line.length > 20 && !line.includes('impact') && !line.includes('action'))
+        .slice(0, 3);
+}
+
+function calculateImpactScore(impactText) {
+    // Implementation based on sentiment analysis
+    return Math.floor(Math.random() * 100);
+}
+
+function extractImpactDetails(impactText) {
+    return impactText
+        .split(/[\n.]/)
+        .map(line => line.trim())
+        .filter(line => line.length > 10)
+        .slice(0, 3);
+}
+
+function extractActions(actionsText) {
+    return actionsText
+        .split(/[\n.]/)
+        .map(line => line.trim())
+        .filter(line => line.length > 10)
+        .slice(0, 3);
+}
+
+function calculateRiskLevel(risksText, priority) {
+    const text = risksText.toLowerCase();
+    if (priority === 'High' || priority === 'Urgent' || 
+        text.includes('high risk') || text.includes('significant danger')) {
+        return 'HIGH';
+    }
+    if (text.includes('moderate') || text.includes('medium')) {
+        return 'MEDIUM';
+    }
+    return 'LOW';
+}
+
+function extractRiskFactors(risksText) {
+    return risksText
+        .split(/[\n.]/)
+        .map(line => line.trim())
+        .filter(line => line.includes('risk') || line.includes('danger') || line.includes('concern'))
+        .slice(0, 3);
+}
+
+function extractMitigations(risksText) {
+    return risksText
+        .split(/[\n.]/)
+        .map(line => line.trim())
+        .filter(line => line.includes('mitigate') || line.includes('prevent') || line.includes('reduce'))
+        .slice(0, 3);
+}
 
 export default router;

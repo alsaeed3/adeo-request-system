@@ -59,10 +59,10 @@ const RequestsPage = () => {
               <TableBody>
                 {requests.map((request) => (
                   <TableRow
-                    key={request._id}
-                    className="cursor-pointer hover:bg-muted/50"
-                    onClick={() => navigate(`/requests/${request._id}`)}
-                  >
+                  key={request._id}
+                  className="cursor-pointer hover:bg-muted/50"
+                  onClick={() => navigate(`/requests/${request._id}`)}
+                >
                     <TableCell>{request.requestNumber}</TableCell>
                     <TableCell className="font-medium">
                       {request.title}

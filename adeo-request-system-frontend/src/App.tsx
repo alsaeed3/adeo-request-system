@@ -3,8 +3,10 @@ import { MainLayout } from './components/layout/MainLayout';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import NewRequestPage from './pages/requests/NewRequestPage';
 import RequestsPage from './pages/requests/RequestsPage';
+import RequestDetailsPage from './pages/requests/RequestDetailsPage';
 import { Toaster } from './components/ui/toaster';
 import AnalyticsPage from './pages/analytics/AnalyticsPage';
+
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
@@ -33,7 +35,7 @@ function App() {
             {/* Requests routes */}
             <Route path="requests">
               <Route path="new" element={<NewRequestPage />} />
-              <Route path=":id" element={<div>Request Details</div>} />
+              <Route path=":id" element={<RequestDetailsPage />} />
               <Route index element={<RequestsPage />} />
             </Route>
 
