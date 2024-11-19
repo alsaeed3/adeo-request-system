@@ -4,6 +4,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import NewRequestPage from './pages/requests/NewRequestPage';
 import RequestsPage from './pages/requests/RequestsPage';
 import { Toaster } from './components/ui/toaster';
+import AnalyticsPage from './pages/analytics/AnalyticsPage';
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
@@ -24,6 +25,11 @@ function App() {
             {/* Dashboard route */}
             <Route index element={<div>Dashboard</div>} />
             
+            {/* Analytics routes */}
+            <Route path="analytics">
+              <Route index element={<AnalyticsPage />} />
+            </Route>
+
             {/* Requests routes */}
             <Route path="requests">
               <Route path="new" element={<NewRequestPage />} />
