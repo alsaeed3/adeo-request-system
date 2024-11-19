@@ -56,17 +56,6 @@ const AI_MODELS = {
     FALLBACK: 'gpt-3.5-turbo-instruct'
 };
 
-// Rate limiting configuration
-const rateLimiter = {
-    windowMs: 15 * 60 * 1000, // 15 minutes
-    max: 100, // limit each IP to 100 requests per windowMs
-    keyGenerator: () => 'global' // Use global rate limiting for AI requests
-};
-
-// Initialize rate limiter
-const limiter = rateLimit(rateLimiter);
-const checkRateLimit = promisify(limiter);
-
 // Main processing function
 export async function processRequest(rawRequest) {
     const startTime = Date.now();
@@ -74,8 +63,6 @@ export async function processRequest(rawRequest) {
     let error = null;
 
     try {
-        // Check rate limit
-        await checkRateLimit();
 
         // Generate cache key
         const cacheKey = generateCacheKey(rawRequest);

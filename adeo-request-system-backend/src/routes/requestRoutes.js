@@ -7,8 +7,15 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import { dirname } from 'path';
 import { processRequest } from '../services/requestProcessor.js';
+import rateLimit from 'express-rate-limit';
 
 const router = express.Router();
+
+const analyzeLimit = rateLimit({
+    windowMs: 15 * 60 * 1000,
+    max: 100, 
+    message: 'Too many analysis requests, please try again later'
+});
 
 // Get the directory name
 const __filename = fileURLToPath(import.meta.url);
@@ -130,7 +137,7 @@ router.get('/', async (req, res) => {
     }
 });
 
-router.post('/:id/analyze', async (req, res) => {
+router.post('/:id/analyze', analyzeLimit, async (req, res) => {
     try {
         const request = await Request.findById(req.params.id);
         if (!request) {
@@ -140,6 +147,7 @@ router.post('/:id/analyze', async (req, res) => {
             });
         }
 
+        // Process the request using the requestProcessor
         const analysis = await processRequest({
             title: request.title,
             description: request.description,
@@ -154,13 +162,16 @@ router.post('/:id/analyze', async (req, res) => {
             }
         });
 
+        // Add error checking for the analysis result
         if (!analysis || !analysis.analysis || !analysis.recommendations) {
             throw new Error('Invalid analysis result structure');
         }
 
+        // Log successful analysis
         console.log('Analysis completed successfully for request:', request.requestNumber);
 
-        await Request.findByIdAndUpdate(
+        // Update the request with the analysis
+        const updatedRequest = await Request.findByIdAndUpdate(
             req.params.id,
             {
                 $set: {
