@@ -16,79 +16,53 @@ import {
 } from "@/components/ui/table";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 
-interface RequestAnalysis {
-  summary: string;
-  trends: string[];
-  impactAssessment: string;
-  policyAlignment: string;
-  riskLevel: 'low' | 'medium' | 'high';
+interface RequestMetadata {
+  createdFrom: string;
+  version: number;
+  tags: string[];
 }
 
-interface RequestRecommendations {
-  strategic: string[];
-  operational: string[];
-  timeline: string;
-  risks: string[];
-  budgetImplications: string;
-}
-
-interface ProcessedRequest {
+interface Request {
+  metadata: RequestMetadata;
+  _id: string;
+  requestNumber: string;
   title: string;
-  department: string;
-  type: string;
-  analysis: RequestAnalysis;
-  recommendations: RequestRecommendations;
-  metadata: {
-    processingVersion: string;
-    processingDate: string;
-    processingDuration: number;
-    aiModelUsed: string;
-  };
+  description: string;
+  requestType: string;
+  priority: string;
+  status: string;
+  attachments: any[];
+  createdAt: string;
+  updatedAt: string;
+}
+
+interface ApiResponse {
+  status: string;
+  count: number;
+  data: Request[];
 }
 
 const AnalyticsPage = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [requests, setRequests] = useState<ProcessedRequest[]>([]);
+  const [requests, setRequests] = useState<Request[]>([]);
 
   const fetchAnalytics = async () => {
     try {
       setLoading(true);
-      // Updated URL to match your backend endpoint
       const response = await fetch('http://localhost:3000/api/requests', {
         method: 'GET',
         headers: {
           'Accept': 'application/json',
-          'Content-Type': 'application/json',
         },
-        credentials: 'include', // Include cookies if needed
       });
 
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
 
-      // Log the raw response for debugging
-      const rawData = await response.text();
-      console.log('Raw API Response:', rawData);
-
-      // Try to parse the JSON data
-      let data;
-      try {
-        data = JSON.parse(rawData);
-      } catch (parseError) {
-        console.error('JSON Parse Error:', parseError);
-        throw new Error('Failed to parse response data');
-      }
-
-      // Validate the data structure
-      if (!Array.isArray(data)) {
-        console.warn('Data is not an array:', data);
-        // If it's a single object, wrap it in an array
-        data = Array.isArray(data.requests) ? data.requests : [data];
-      }
-
-      setRequests(data);
+      const data: ApiResponse = await response.json();
+      setRequests(data.data);
     } catch (err) {
       console.error('Fetch Error:', err);
       setError(err instanceof Error ? err.message : 'An error occurred');
@@ -101,7 +75,6 @@ const AnalyticsPage = () => {
     fetchAnalytics();
   }, []);
 
-  // Render loading state
   if (loading) {
     return (
       <div className="container mx-auto p-6">
@@ -114,7 +87,6 @@ const AnalyticsPage = () => {
     );
   }
 
-  // Render error state
   if (error) {
     return (
       <div className="container mx-auto p-6">
@@ -133,104 +105,83 @@ const AnalyticsPage = () => {
     );
   }
 
-  // If no data is available, show empty state
-  if (!requests.length) {
-    return (
-      <div className="container mx-auto p-6">
-        <Card>
-          <CardContent className="p-6">
-            <p className="text-center">No analytics data available</p>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
-
-  // Calculate statistics from processed requests
-  const programStats = {
-    totalRequests: requests.length,
-    averageProcessingTime: requests.reduce((acc, req) => 
-      acc + (req.metadata?.processingDuration || 0), 0) / requests.length || 0,
-    highRiskCount: requests.filter(req => 
-      req.analysis?.riskLevel === 'high').length || 0,
-    completionRate: "100%"
-  };
-
-  // Extract unique departments and their request counts
-  const departmentStats = requests.reduce((acc, req) => {
-    if (req.department) {
-      acc[req.department] = (acc[req.department] || 0) + 1;
-    }
+  // Calculate statistics
+  const totalRequests = requests.length;
+  
+  // Priority distribution
+  const priorityStats = requests.reduce((acc, req) => {
+    acc[req.priority] = (acc[req.priority] || 0) + 1;
     return acc;
   }, {} as Record<string, number>);
 
-  // Aggregate risks across all requests
-  const aggregateRisks = requests.flatMap(req => 
-    (req.recommendations?.risks || []).map(risk => ({
-      risk,
-      impact: req.analysis?.riskLevel || 'unknown',
-      department: req.department || 'unknown'
-    }))
-  );
+  // Request type distribution
+  const typeStats = requests.reduce((acc, req) => {
+    acc[req.requestType] = (acc[req.requestType] || 0) + 1;
+    return acc;
+  }, {} as Record<string, number>);
+
+  // Status distribution
+  const statusStats = requests.reduce((acc, req) => {
+    acc[req.status] = (acc[req.status] || 0) + 1;
+    return acc;
+  }, {} as Record<string, number>);
 
   return (
     <div className="container mx-auto p-6 space-y-6">
       <h1 className="text-3xl font-bold mb-6">
-        Request Processing Analytics Dashboard
+        Request Analytics Dashboard
       </h1>
 
-      {/* Program Overview */}
+      {/* Overview Stats */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <Card>
           <CardHeader>
             <CardTitle>Total Requests</CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-3xl font-bold">{programStats.totalRequests}</p>
+            <p className="text-3xl font-bold">{totalRequests}</p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader>
-            <CardTitle>Avg. Processing Time</CardTitle>
+            <CardTitle>High Priority</CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-3xl font-bold">
-              {(programStats.averageProcessingTime / 1000).toFixed(2)}s
-            </p>
+            <p className="text-3xl font-bold">{priorityStats['High'] || 0}</p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader>
-            <CardTitle>High Risk Requests</CardTitle>
+            <CardTitle>Strategic Initiatives</CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-3xl font-bold">{programStats.highRiskCount}</p>
+            <p className="text-3xl font-bold">{typeStats['Strategic Initiative'] || 0}</p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader>
-            <CardTitle>Processing Success</CardTitle>
+            <CardTitle>Draft Requests</CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-3xl font-bold">{programStats.completionRate}</p>
+            <p className="text-3xl font-bold">{statusStats['Draft'] || 0}</p>
           </CardContent>
         </Card>
       </div>
 
-      {/* Department Statistics */}
+      {/* Request Type Distribution */}
       <Card>
         <CardHeader>
-          <CardTitle>Department Distribution</CardTitle>
-          <CardDescription>Request distribution across departments</CardDescription>
+          <CardTitle>Request Type Distribution</CardTitle>
+          <CardDescription>Breakdown by request type</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            {Object.entries(departmentStats).map(([dept, count]) => (
-              <div key={dept} className="text-center p-4 bg-muted rounded-lg">
-                <h3 className="font-medium text-sm">{dept}</h3>
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+            {Object.entries(typeStats).map(([type, count]) => (
+              <div key={type} className="text-center p-4 bg-muted rounded-lg">
+                <h3 className="font-medium text-sm">{type}</h3>
                 <p className="text-2xl font-bold mt-2">{count}</p>
               </div>
             ))}
@@ -238,27 +189,39 @@ const AnalyticsPage = () => {
         </CardContent>
       </Card>
 
-      {/* Risk Analysis Table */}
+      {/* Recent Requests Table */}
       <Card>
         <CardHeader>
-          <CardTitle>Risk Analysis</CardTitle>
-          <CardDescription>Aggregate risks across all requests</CardDescription>
+          <CardTitle>Recent Requests</CardTitle>
+          <CardDescription>Latest requests in the system</CardDescription>
         </CardHeader>
         <CardContent>
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Risk Factor</TableHead>
-                <TableHead>Impact Level</TableHead>
-                <TableHead>Department</TableHead>
+                <TableHead>Request Number</TableHead>
+                <TableHead>Title</TableHead>
+                <TableHead>Type</TableHead>
+                <TableHead>Priority</TableHead>
+                <TableHead>Status</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {aggregateRisks.slice(0, 10).map((item, index) => (
-                <TableRow key={index}>
-                  <TableCell>{item.risk}</TableCell>
-                  <TableCell className="capitalize">{item.impact}</TableCell>
-                  <TableCell>{item.department}</TableCell>
+              {requests.map((request) => (
+                <TableRow key={request._id}>
+                  <TableCell>{request.requestNumber}</TableCell>
+                  <TableCell>{request.title}</TableCell>
+                  <TableCell>{request.requestType}</TableCell>
+                  <TableCell>
+                    <span className={`px-2 py-1 rounded text-sm ${
+                      request.priority === 'High' ? 'bg-red-100 text-red-800' :
+                      request.priority === 'Medium' ? 'bg-yellow-100 text-yellow-800' :
+                      'bg-green-100 text-green-800'
+                    }`}>
+                      {request.priority}
+                    </span>
+                  </TableCell>
+                  <TableCell>{request.status}</TableCell>
                 </TableRow>
               ))}
             </TableBody>
