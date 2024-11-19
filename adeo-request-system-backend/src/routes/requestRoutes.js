@@ -137,109 +137,72 @@ router.get('/', async (req, res) => {
     }
 });
 
-// In requestRoutes.js
+router.post('/:id/analyze', analyzeLimit, async (req, res) => {
+    try {
+        const request = await Request.findById(req.params.id);
+        if (!request) {
+            return res.status(404).json({
+                status: 'error',
+                message: 'Request not found'
+            });
+        }
 
-const isArabicText = (text) => {
-    // Simple check for Arabic characters
-    const arabicPattern = /[\u0600-\u06FF]/;
-    return arabicPattern.test(text);
-  };
-  
-  router.post('/:id/analyze', analyzeLimit, async (req, res) => {
-      try {
-          const request = await Request.findById(req.params.id);
-          if (!request) {
-              return res.status(404).json({
-                  status: 'error',
-                  message: 'Request not found'
-              });
-          }
-  
-          const isArabic = isArabicText(request.title) || isArabicText(request.description);
-          
-          // Create a bilingual system prompt
-          const systemPrompt = isArabic ? 
-              "أنت محلل سياسات حكومي خبير متخصص في تقييم المشاريع وتحليل الأثر. قدم توصيات مفصلة وعملية بناءً على تفاصيل الطلب." :
-              "You are an expert government policy analyst specializing in project evaluation and impact assessment. Provide detailed, practical recommendations based on the request details.";
-  
-          // Process the request using the requestProcessor with language awareness
-          const analysis = await processRequest({
-              title: request.title,
-              description: request.description,
-              type: request.requestType,
-              priority: request.priority,
-              department: request.department,
-              content: request.description,
-              language: isArabic ? 'ar' : 'en',
-              metadata: {
-                  requestId: request._id,
-                  requestNumber: request.requestNumber,
-                  analysisVersion: '1.0'
-              },
-              promptTemplate: isArabic ? {
-                  systemPrompt,
-                  analysisPrompt: `
-                      قم بتحليل طلب الحكومة التالي وقدم توصيات مفصلة:
-  
-                      العنوان: ${request.title}
-                      الوصف: ${request.description}
-                      النوع: ${request.requestType}
-                      الأولوية: ${request.priority}
-                      الإدارة: ${request.department}
-  
-                      يرجى تقديم تحليل شامل يتضمن:
-                      1. الاتجاهات الرئيسية والتطورات في هذا المجال
-                      2. تحليل الأثر الاقتصادي
-                      3. تحليل الأثر الاجتماعي
-                      4. تحليل الأثر البيئي
-                      5. الإجراءات الفورية المطلوبة
-                      6. الاعتبارات الاستراتيجية طويلة المدى
-                      7. المخاطر المحتملة واستراتيجيات التخفيف
-  
-                      قم بتنسيق الرد بطريقة منظمة تتناول كل نقطة.
-                  `
-              } : {
-                  systemPrompt,
-                  analysisPrompt: `
-                      Analyze the following government request and provide detailed recommendations:
-  
-                      Title: ${request.title}
-                      Description: ${request.description}
-                      Type: ${request.requestType}
-                      Priority: ${request.priority}
-                      Department: ${request.department}
-  
-                      Please provide a comprehensive analysis including:
-                      1. Key trends and developments in this area
-                      2. Economic impact analysis
-                      3. Social impact analysis
-                      4. Environmental impact analysis
-                      5. Immediate actions needed
-                      6. Long-term strategic considerations
-                      7. Potential risks and mitigation strategies
-  
-                      Format the response in a structured way addressing each point.
-                  `
-              }
-          });
-  
-          // The rest of your code remains the same...
-      } catch (error) {
-          console.error('Analysis error details:', {
-              requestId: req.params.id,
-              error: error.message,
-              stack: error.stack
-          });
-          
-          res.status(500).json({
-              status: 'error',
-              message: 'Failed to analyze request',
-              error: error.message,
-              requestId: req.params.id
-          });
-      }
-  });
-  
+        // Process the request using the requestProcessor
+        const analysis = await processRequest({
+            title: request.title,
+            description: request.description,
+            type: request.requestType,
+            priority: request.priority,
+            department: request.department,
+            content: request.description,
+            metadata: {
+                requestId: request._id,
+                requestNumber: request.requestNumber,
+                analysisVersion: '1.0'
+            }
+        });
+
+        // Add error checking for the analysis result
+        if (!analysis || !analysis.analysis || !analysis.recommendations) {
+            throw new Error('Invalid analysis result structure');
+        }
+
+        // Log successful analysis
+        console.log('Analysis completed successfully for request:', request.requestNumber);
+
+        // Update the request with the analysis
+        const updatedRequest = await Request.findByIdAndUpdate(
+            req.params.id,
+            {
+                $set: {
+                    'metadata.analysis': analysis,
+                    'metadata.lastAnalyzed': new Date()
+                }
+            },
+            { new: true }
+        );
+
+        res.json({
+            status: 'success',
+            data: analysis
+        });
+
+    } catch (error) {
+        console.error('Analysis error details:', {
+            requestId: req.params.id,
+            error: error.message,
+            stack: error.stack
+        });
+        
+        res.status(500).json({
+            status: 'error',
+            message: 'Failed to analyze request',
+            error: error.message,
+            requestId: req.params.id
+        });
+    }
+});
+
 router.get('/:id', async (req, res) => {
     try {
         const request = await Request.findById(req.params.id);
@@ -336,7 +299,7 @@ router.post('/analyze', async (req, res) => {
 });
 
 // Helper function to process AI response
-function processAIResponse(aiResponse, priority, language = 'en') {
+function processAIResponse(aiResponse, priority) {
     // Extract key sections using regex or string splitting
     const sections = extractSections(aiResponse);
 
@@ -371,8 +334,7 @@ function processAIResponse(aiResponse, priority, language = 'en') {
             level: calculateRiskLevel(sections.risks, priority),
             factors: extractRiskFactors(sections.risks),
             mitigations: extractMitigations(sections.risks)
-        },
-        language // Add language field to response
+        }
     };
 }
 

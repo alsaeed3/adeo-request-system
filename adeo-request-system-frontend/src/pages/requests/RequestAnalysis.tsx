@@ -15,13 +15,23 @@ import {
   const formatText = (text: string, language = 'en') => {
     if (!text) return '';
     
-    // Remove formatting artifacts
+    // Remove asterisks and clean up formatting artifacts
     let formattedText = text
-      .replace(/[*]/g, '')  // Remove asterisks
+      .replace(/\*/g, '')  // Remove asterisks
       .replace(/^\s*\.\s*/gm, '')  // Remove dots at start of lines
       .replace(/^-\s+/gm, '') // Remove dash bullet points
       .replace(/^\d+\.\s*/gm, '') // Remove numbered list markers
       .trim();
+  
+    // Add specific formatting for Arabic text
+    if (language === 'ar') {
+      formattedText = formattedText
+        .replace(/(\d+)/g, (match) => {
+          // Convert Western numbers to Arabic numerals if needed
+          const arabicNumerals = ['٠', '١', '٢', '٣', '٤', '٥', '٦', '٧', '٨', '٩'];
+          return match.split('').map(d => arabicNumerals[parseInt(d)]).join('');
+        });
+    }
   
     return formattedText;
   };
@@ -59,7 +69,7 @@ import {
       return (
         <div className={containerClass}>
           {title && (
-            <h3 className={`text-lg font-semibold text-gray-900 ${textClass} mb-3`}>{title}</h3>
+            <h3 className={`text-lg font-semibold text-gray-900 ${textClass}`}>{title}</h3>
           )}
           <ul className="space-y-2">
             {content.map((item, index) => {
@@ -69,9 +79,7 @@ import {
               return (
                 <li 
                   key={index}
-                  className={`p-3 border-r-4 border-l-0 ${getBorderColor()} rounded-l-lg ${
-                    language === 'ar' ? 'pr-4 border-r-4 border-l-0 rounded-l-lg' : 'pl-4 border-l-4 border-r-0 rounded-r-lg'
-                  } ${textClass}`}
+                  className={`pl-4 border-l-2 ${getBorderColor()} p-2 rounded-r-lg ${textClass}`}
                 >
                   {formattedItem}
                 </li>
@@ -88,7 +96,7 @@ import {
     return (
       <div className={containerClass}>
         {title && (
-          <h3 className={`text-lg font-semibold text-gray-900 ${textClass} mb-3`}>{title}</h3>
+          <h3 className={`text-lg font-semibold text-gray-900 ${textClass}`}>{title}</h3>
         )}
         <p className={`text-gray-700 leading-relaxed ${textClass}`}>
           {formattedContent}
@@ -117,54 +125,30 @@ import {
     };
   }
   
-  const translations = {
-    en: {
-      executiveSummary: 'Executive Summary',
-      keyTrends: 'Key Trends',
-      strategicRecommendations: 'Strategic Recommendations',
-      implementationSteps: 'Implementation Steps',
-      riskAssessment: 'Risk Assessment',
-      riskLevel: 'Risk Level',
-      identifiedRisks: 'Identified Risks',
-      budgetImplications: 'Budget Implications'
-    },
-    ar: {
-      executiveSummary: 'الملخص التنفيذي',
-      keyTrends: 'الاتجاهات الرئيسية',
-      strategicRecommendations: 'التوصيات الاستراتيجية',
-      implementationSteps: 'خطوات التنفيذ',
-      riskAssessment: 'تقييم المخاطر',
-      riskLevel: 'مستوى المخاطر',
-      identifiedRisks: 'المخاطر المحددة',
-      budgetImplications: 'الآثار المالية'
-    }
-  };
-  
   const RequestAnalysis: React.FC<RequestAnalysisProps> = ({ analysis }) => {
     if (!analysis?.analysis || !analysis?.recommendations) return null;
   
-    // Determine language based on content
+    // Determine language based on content or fallback to provided language
     const language = analysis.language || 
-      (isArabicText(analysis.analysis.summary || analysis.analysis.trends[0]) ? 'ar' : 'en');
-    
-    const t = translations[language];
+      (isArabicText(analysis.analysis.summary) ? 'ar' : 'en');
   
-    const riskLevelText = language === 'ar' ? {
-      high: 'مرتفع',
-      medium: 'متوسط',
-      low: 'منخفض'
-    } : {
-      high: 'HIGH',
-      medium: 'MEDIUM',
-      low: 'LOW'
+    const translations = {
+      executiveSummary: language === 'ar' ? 'الملخص التنفيذي' : 'Executive Summary',
+      keyTrends: language === 'ar' ? 'الاتجاهات الرئيسية' : 'Key Trends',
+      strategicRecommendations: language === 'ar' ? 'التوصيات الاستراتيجية' : 'Strategic Recommendations',
+      implementationSteps: language === 'ar' ? 'خطوات التنفيذ' : 'Implementation Steps',
+      riskAssessment: language === 'ar' ? 'تقييم المخاطر' : 'Risk Assessment',
+      riskLevel: language === 'ar' ? 'مستوى المخاطر' : 'Risk Level',
+      identifiedRisks: language === 'ar' ? 'المخاطر المحددة' : 'Identified Risks',
+      budgetImplications: language === 'ar' ? 'الآثار المالية' : 'Budget Implications'
     };
   
     return (
-      <div dir={language === 'ar' ? 'rtl' : 'ltr'} className="space-y-8">
+      <div className={`space-y-8 ${language === 'ar' ? 'rtl' : 'ltr'}`}>
         {/* Executive Summary with Trends */}
         <div className="space-y-6">
-          <h2 className={`text-xl font-bold text-gray-900 ${language === 'ar' ? 'font-arabic' : ''}`}>
-            {t.executiveSummary}
+          <h2 className={`text-xl font-bold text-gray-900 ${language === 'ar' ? 'text-right font-arabic' : ''}`}>
+            {translations.executiveSummary}
           </h2>
           {analysis.analysis.summary && (
             <AnalysisSection 
@@ -173,19 +157,19 @@ import {
             />
           )}
           <AnalysisSection 
-            title={t.keyTrends}
-            content={analysis.analysis.trends.filter(t => t?.trim())} 
+            title={translations.keyTrends}
+            content={analysis.analysis.trends} 
             language={language}
           />
         </div>
   
         {/* Strategic Recommendations */}
         <div className="space-y-6">
-          <h2 className={`text-xl font-bold text-gray-900 ${language === 'ar' ? 'font-arabic' : ''}`}>
-            {t.strategicRecommendations}
+          <h2 className={`text-xl font-bold text-gray-900 ${language === 'ar' ? 'text-right font-arabic' : ''}`}>
+            {translations.strategicRecommendations}
           </h2>
           <AnalysisSection 
-            content={analysis.recommendations.strategic.filter(r => r?.trim())} 
+            content={analysis.recommendations.strategic} 
             language={language}
             variant="success"
           />
@@ -193,11 +177,11 @@ import {
   
         {/* Implementation Steps */}
         <div className="space-y-6">
-          <h2 className={`text-xl font-bold text-gray-900 ${language === 'ar' ? 'font-arabic' : ''}`}>
-            {t.implementationSteps}
+          <h2 className={`text-xl font-bold text-gray-900 ${language === 'ar' ? 'text-right font-arabic' : ''}`}>
+            {translations.implementationSteps}
           </h2>
           <AnalysisSection 
-            content={analysis.recommendations.operational.filter(o => o?.trim())} 
+            content={analysis.recommendations.operational} 
             language={language}
             variant="success"
           />
@@ -206,37 +190,35 @@ import {
         {/* Risk Assessment */}
         <Card className="mt-6">
           <CardHeader>
-            <CardTitle className={`text-lg ${language === 'ar' ? 'font-arabic' : ''}`}>
-              {t.riskAssessment}
+            <CardTitle className={`text-lg ${language === 'ar' ? 'text-right font-arabic' : ''}`}>
+              {translations.riskAssessment}
             </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              <div className={`flex items-center ${language === 'ar' ? 'space-x-reverse' : 'space-x-2'}`}>
-                <span className={`font-semibold ${language === 'ar' ? 'font-arabic ml-2' : 'mr-2'}`}>
-                  {t.riskLevel}:
-                </span>
+              <div className={`flex items-center ${language === 'ar' ? 'justify-end' : 'justify-start'} space-x-2`}>
                 <Badge variant={
                   analysis.analysis.riskLevel === 'high' ? 'destructive' :
                   analysis.analysis.riskLevel === 'medium' ? 'warning' :
                   'success'
                 }>
-                  {riskLevelText[analysis.analysis.riskLevel.toLowerCase() as keyof typeof riskLevelText]}
+                  {analysis.analysis.riskLevel.toUpperCase()}
                 </Badge>
+                <span className={`font-semibold ${language === 'ar' ? 'font-arabic' : ''}`}>
+                  {translations.riskLevel}
+                </span>
               </div>
-              
               {analysis.recommendations.risks.length > 0 && (
                 <AnalysisSection 
-                  title={t.identifiedRisks}
-                  content={analysis.recommendations.risks.filter(r => r?.trim())} 
+                  title={translations.identifiedRisks}
+                  content={analysis.recommendations.risks} 
                   language={language}
                   variant="warning"
                 />
               )}
-              
               {analysis.recommendations.budgetImplications && (
                 <AnalysisSection 
-                  title={t.budgetImplications}
+                  title={translations.budgetImplications}
                   content={analysis.recommendations.budgetImplications} 
                   language={language}
                 />
