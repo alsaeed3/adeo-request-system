@@ -6,6 +6,7 @@ import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { dirname } from 'path';
+import { processRequest } from '../services/requestProcessor.js';
 
 const router = express.Router();
 
@@ -139,33 +140,54 @@ router.post('/:id/analyze', async (req, res) => {
             });
         }
 
-        // Process the request using the existing requestProcessor
         const analysis = await processRequest({
             title: request.title,
             description: request.description,
             type: request.requestType,
             priority: request.priority,
+            department: request.department,
             content: request.description,
-            department: 'Government Department' // You can add department to your schema if needed
-        });
-
-        // Update the request with the analysis
-        await Request.findByIdAndUpdate(req.params.id, {
-            $set: {
-                'metadata.analysis': analysis
+            metadata: {
+                requestId: request._id,
+                requestNumber: request.requestNumber,
+                analysisVersion: '1.0'
             }
         });
+
+        if (!analysis || !analysis.analysis || !analysis.recommendations) {
+            throw new Error('Invalid analysis result structure');
+        }
+
+        console.log('Analysis completed successfully for request:', request.requestNumber);
+
+        await Request.findByIdAndUpdate(
+            req.params.id,
+            {
+                $set: {
+                    'metadata.analysis': analysis,
+                    'metadata.lastAnalyzed': new Date()
+                }
+            },
+            { new: true }
+        );
 
         res.json({
             status: 'success',
             data: analysis
         });
+
     } catch (error) {
-        console.error('Analysis error:', error);
+        console.error('Analysis error details:', {
+            requestId: req.params.id,
+            error: error.message,
+            stack: error.stack
+        });
+        
         res.status(500).json({
             status: 'error',
             message: 'Failed to analyze request',
-            error: error.message
+            error: error.message,
+            requestId: req.params.id
         });
     }
 });
