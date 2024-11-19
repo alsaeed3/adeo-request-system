@@ -24,8 +24,6 @@ if (process.env.NODE_ENV !== 'production') {
 
 // Database connection options
 const dbOptions = {
-  useNewUrlParser: true,
-  useUnifiedTopology: true,
   maxPoolSize: 10,
   serverSelectionTimeoutMS: 5000,
   socketTimeoutMS: 45000,

@@ -1,11 +1,13 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { requestsApi } from '@/api/requests';
-import { toast } from '@/components/ui/use-toast';
+import { useQuery } from '@tanstack/react-query';
+import axios from '../lib/axios';
 
-export function useRequests(params: RequestsParams = {}) {
-  return useQuery({
-    queryKey: ['requests', params],
-    queryFn: () => requestsApi.getRequests(params)
+export function useRequests<T>() {
+  return useQuery<T, Error>({
+    queryKey: ['requests'],
+    queryFn: async () => {
+      const { data } = await axios.get('/api/requests');
+      return data;
+    },
   });
 }
 

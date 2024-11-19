@@ -17,7 +17,8 @@ const NewRequestPage = () => {
     description: '',
     requestType: '',
     priority: '',
-    attachments: null
+    attachments: null,
+    department: ''
   });
 
   const [isLoading, setIsLoading] = useState(false);
@@ -41,34 +42,41 @@ const NewRequestPage = () => {
       setError('Priority is required');
       return false;
     }
+    if (!formData.department) {
+      setError('Department is required');
+      return false;
+    }
     return true;
   };
 
-  const handleSubmit = async (data: RequestFormData) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+
+    if (!validateForm()) {
+        return;
+    }
+
+    setIsLoading(true);
     try {
-        const formData = new FormData();
+        const formDataToSend = new FormData();
         
-        // Add form fields
-        Object.entries(data).forEach(([key, value]) => {
-            if (value !== undefined && value !== null) {
-                formData.append(key, value.toString());
-            }
-        });
+        // Append form fields
+        formDataToSend.append('title', formData.title);
+        formDataToSend.append('description', formData.description);
+        formDataToSend.append('requestType', formData.requestType);
+        formDataToSend.append('priority', formData.priority);
+        formDataToSend.append('department', formData.department);
 
         // Add files if any
-        if (files?.length > 0) {
-            files.forEach(file => {
-                formData.append('files', file);
-            });
+        if (formData.attachments) {
+            formDataToSend.append('files', formData.attachments);
         }
 
         const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
-
         const response = await fetch(`${API_URL}/api/requests`, {
             method: 'POST',
-            body: formData,
+            body: formDataToSend,
             credentials: 'include',
-            // Don't set Content-Type header - browser will set it automatically with boundary
         });
 
         if (!response.ok) {
@@ -79,11 +87,14 @@ const NewRequestPage = () => {
         const result = await response.json();
         console.log('Request created successfully:', result);
         
-        // Handle success (e.g., show notification, redirect)
-        
+        // Navigate to requests page after successful submission
+        navigate('/requests');
+
     } catch (error) {
         console.error('Error submitting request:', error);
-        // Handle error (e.g., show error notification)
+        setError(error.message || 'Failed to submit request');
+    } finally {
+        setIsLoading(false);
     }
   };
 
@@ -156,10 +167,45 @@ const NewRequestPage = () => {
                     <SelectValue placeholder="Select request type" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="Feature Request">Feature Request</SelectItem>
-                    <SelectItem value="Bug Report">Bug Report</SelectItem>
-                    <SelectItem value="Access Request">Access Request</SelectItem>
-                    <SelectItem value="Other">Other</SelectItem>
+                    <SelectItem value="Policy Development">Policy Development Request</SelectItem>
+                    <SelectItem value="Strategic Initiative">Strategic Initiative Proposal</SelectItem>
+                    <SelectItem value="Program Approval">Program Approval Request</SelectItem>
+                    <SelectItem value="Budget Allocation">Budget Allocation Request</SelectItem>
+                    <SelectItem value="Inter-Department Collaboration">Inter-Department Collaboration</SelectItem>
+                    <SelectItem value="Executive Decision">Executive Decision Request</SelectItem>
+                    <SelectItem value="Regulatory Amendment">Regulatory Amendment Request</SelectItem>
+                    <SelectItem value="Resource Support">Resource Support Request</SelectItem>
+                    <SelectItem value="Technical Assistance">Technical Assistance Request</SelectItem>
+                    <SelectItem value="Other">Other Administrative Request</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div>
+                <Label htmlFor="department">Department</Label>
+                <Select 
+                  value={formData.department}
+                  onValueChange={(value) => {
+                    setFormData(prev => ({ ...prev, department: value }));
+                    setError('');
+                  }}
+                  required
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select department" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="DCD">Department of Community Development</SelectItem>
+                    <SelectItem value="DCT">Department of Culture and Tourism</SelectItem>
+                    <SelectItem value="DED">Department of Economic Development</SelectItem>
+                    <SelectItem value="ADEK">Department of Education and Knowledge</SelectItem>
+                    <SelectItem value="DOE">Department of Energy</SelectItem>
+                    <SelectItem value="DOF">Department of Finance</SelectItem>
+                    <SelectItem value="DGE">Department of Government Enablement</SelectItem>
+                    <SelectItem value="DOH">Department of Health</SelectItem>
+                    <SelectItem value="DMT">Department of Municipalities and Transport</SelectItem>
+                    <SelectItem value="ADJD">Abu Dhabi Judicial Department</SelectItem>
+                    <SelectItem value="ITC">Integrated Transport Center</SelectItem>
                   </SelectContent>
                 </Select>
               </div>

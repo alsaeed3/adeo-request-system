@@ -1,42 +1,57 @@
+version: '3.8'
+
 services:
-  frontend:
-    image: node:18-alpine
-    working_dir: /app
-    ports:
-      - "5173:5173"
-    environment:
-      - VITE_API_URL=http://localhost:9091  # Updated to match new backend port
-    volumes:
-      - ./adeo-request-system-frontend:/app
-    command: sh -c "npm install && npm run dev -- --host 0.0.0.0"
-    depends_on:
-      - backend
-
-  backend:
-    image: node:18-alpine
-    working_dir: /app
-    ports:
-      - "9091:3000"  # Changed to 9091
-    environment:
-      - ./adeo-request-system-backend/.env
-    volumes:
-      - ./adeo-request-system-backend:/app
-      - backend_logs:/app/logs
-      - backend_uploads:/app/uploads
-    command: sh -c "npm install && npm run dev"
-    depends_on:
-      - mongodb
-
   mongodb:
     image: mongo:latest
+    container_name: mongodb
+    restart: always
     ports:
       - "27018:27017"
     volumes:
       - mongodb_data:/data/db
+    networks:
+      - app_network
+
+  backend:
+    build:
+      context: ./adeo-request-system-backend
+      dockerfile: Dockerfile
+    container_name: backend
+    restart: always
+    ports:
+      - "5000:5000"
     environment:
-      - MONGO_INITDB_DATABASE=adeodb
+      - MONGODB_URI=mongodb://mongodb:27017/adeo_request_system
+      - NODE_ENV=development
+    depends_on:
+      - mongodb
+    volumes:
+      - ./adeo-request-system-backend:/usr/src/app
+      - /usr/src/app/node_modules
+    networks:
+      - app_network
+
+  frontend:
+    build:
+      context: ./adeo-request-system-frontend
+      dockerfile: Dockerfile
+    container_name: frontend
+    restart: always
+    ports:
+      - "3000:3000"
+    environment:
+      - VITE_API_URL=http://backend:5000
+    depends_on:
+      - backend
+    volumes:
+      - ./adeo-request-system-frontend:/usr/src/app
+      - /usr/src/app/node_modules
+    networks:
+      - app_network
+
+networks:
+  app_network:
+    driver: bridge
 
 volumes:
   mongodb_data:
-  backend_logs:
-  backend_uploads:

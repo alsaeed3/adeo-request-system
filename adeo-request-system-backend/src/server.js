@@ -29,8 +29,8 @@ const app = express();
 
 // Define allowed origins BEFORE cors configuration
 const allowedOrigins = [
-    'http://localhost:5173',  // Vite's default port
-    'http://localhost:5174',  // Alternative Vite port
+    'http://localhost:5173',
+    'http://localhost:5174',
     process.env.FRONTEND_URL
 ].filter(Boolean);
 
@@ -40,7 +40,7 @@ const corsOptions = {
         // Allow requests with no origin (like mobile apps or curl requests)
         if (!origin) return callback(null, true);
         
-        if (allowedOrigins.indexOf(origin) !== -1) {
+        if (allowedOrigins.includes(origin)) {
             callback(null, true);
         } else {
             console.log('Origin not allowed by CORS:', origin);
@@ -53,7 +53,7 @@ const corsOptions = {
     optionsSuccessStatus: 200
 };
 
-// Apply CORS first
+// Apply CORS with options
 app.use(cors(corsOptions));
 
 // Basic middleware setup - MOVE THESE BEFORE ROUTES
@@ -138,15 +138,6 @@ const morganOptions = {
 app.use(morgan(morganFormat, morganOptions));
 
 // server.js - Part 3: Middleware and Routes
-
-// Enhanced CORS configuration
-app.use(cors({
-    origin: process.env.FRONTEND_URL || 'http://localhost:5174',
-    methods: process.env.ALLOWED_METHODS?.split(',') || ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-    allowedHeaders: process.env.ALLOWED_HEADERS?.split(',') || ['Content-Type', 'Authorization'],
-    credentials: true,
-    maxAge: parseInt(process.env.CORS_MAX_AGE || '86400')
-}));
 
 // Static file serving with security headers
 app.use('/uploads', (req, res, next) => {

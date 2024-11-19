@@ -1,0 +1,15 @@
+{
+  "requestNumber": "REQ-2024-0001",
+  "title": "asdsa",
+  "description": "sdfsdfsdfsdf",
+  "requestType": "Bug Report",
+  "priority": "High",
+  "status": "Draft",
+  "attachments": [],
+  "metadata": {
+    "createdFrom": "web",
+    "version": 1,
+    "tags": [],
+    "customMetadata": {}
+  }
+}

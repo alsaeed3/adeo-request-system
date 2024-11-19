@@ -13,12 +13,14 @@ interface RequestsParams {
 
 export const requestsApi = {
   getRequests: async (params: RequestsParams) => {
-    const { data } = await api.get('/requests', { params });
+    const { data } = await api.get('/api/requests', { params });
+    console.log('Request data:', data);
     return data;
   },
 
   getRequest: async (id: string) => {
-    const { data } = await api.get(`/requests/${id}`);
+    const { data } = await api.get(`/api/requests/${id}`);
+    console.log('Request data:', data);
     return data;
   },
 
@@ -29,7 +31,7 @@ export const requestsApi = {
         console.log(pair[0], pair[1]);
       }
 
-      const { data } = await api.post('/requests', requestData, {
+      const { data } = await api.post('/api/requests', requestData, {
         headers: {
         },
         timeout: 30000,
@@ -42,12 +44,12 @@ export const requestsApi = {
   },
 
   updateRequest: async (id: string, updateData: Partial<Request>) => {
-    const { data } = await api.put(`/requests/${id}`, updateData);
+    const { data } = await api.put(`/api/requests/${id}`, updateData);
     return data;
   },
 
   deleteRequest: async (id: string) => {
-    const { data } = await api.delete(`/requests/${id}`);
+    const { data } = await api.delete(`/api/requests/${id}`);
     return data;
   }
 };

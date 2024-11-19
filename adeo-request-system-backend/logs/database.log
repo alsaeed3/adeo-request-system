@@ -40,3 +40,69 @@
 {"level":"info","message":"MongoDB connected successfully","service":"database-service","timestamp":"2024-11-18T17:46:00.300Z"}
 {"level":"info","message":"MongoDB connected successfully after retries","service":"database-service","timestamp":"2024-11-18T17:46:00.304Z"}
 {"level":"info","message":"MongoDB connection state changed to: connected","service":"database-service","timestamp":"2024-11-18T17:46:10.223Z"}
+{"level":"info","message":"MongoDB connected successfully","service":"database-service","timestamp":"2024-11-18T19:06:46.986Z"}
+{"level":"info","message":"MongoDB connected successfully after retries","service":"database-service","timestamp":"2024-11-18T19:06:46.992Z"}
+{"level":"info","message":"MongoDB connection state changed to: connected","service":"database-service","timestamp":"2024-11-18T19:06:56.899Z"}
+{"level":"info","message":"MongoDB connected successfully","service":"database-service","timestamp":"2024-11-18T19:11:47.034Z"}
+{"level":"info","message":"MongoDB connected successfully after retries","service":"database-service","timestamp":"2024-11-18T19:11:47.041Z"}
+{"level":"info","message":"MongoDB connected successfully","service":"database-service","timestamp":"2024-11-18T19:11:50.428Z"}
+{"level":"info","message":"MongoDB connected successfully after retries","service":"database-service","timestamp":"2024-11-18T19:11:50.434Z"}
+{"level":"info","message":"MongoDB connected successfully","service":"database-service","timestamp":"2024-11-18T19:11:55.148Z"}
+{"level":"info","message":"MongoDB connected successfully after retries","service":"database-service","timestamp":"2024-11-18T19:11:55.154Z"}
+{"level":"info","message":"MongoDB connected successfully","service":"database-service","timestamp":"2024-11-18T19:12:01.897Z"}
+{"level":"info","message":"MongoDB connected successfully after retries","service":"database-service","timestamp":"2024-11-18T19:12:01.902Z"}
+{"level":"info","message":"MongoDB connection state changed to: connected","service":"database-service","timestamp":"2024-11-18T19:12:11.805Z"}
+{"level":"info","message":"MongoDB connected successfully","service":"database-service","timestamp":"2024-11-18T19:12:18.903Z"}
+{"level":"info","message":"MongoDB connected successfully after retries","service":"database-service","timestamp":"2024-11-18T19:12:18.908Z"}
+{"level":"info","message":"MongoDB connection state changed to: connected","service":"database-service","timestamp":"2024-11-18T19:12:28.815Z"}
+{"level":"info","message":"MongoDB connected successfully","service":"database-service","timestamp":"2024-11-18T19:12:46.713Z"}
+{"level":"info","message":"MongoDB connected successfully after retries","service":"database-service","timestamp":"2024-11-18T19:12:46.716Z"}
+{"level":"info","message":"MongoDB connection state changed to: connected","service":"database-service","timestamp":"2024-11-18T19:12:56.622Z"}
+{"level":"info","message":"MongoDB connected successfully","service":"database-service","timestamp":"2024-11-18T19:54:08.774Z"}
+{"level":"info","message":"MongoDB connected successfully after retries","service":"database-service","timestamp":"2024-11-18T19:54:08.778Z"}
+{"level":"info","message":"MongoDB connection state changed to: connected","service":"database-service","timestamp":"2024-11-18T19:54:18.674Z"}
+{"level":"info","message":"MongoDB connected successfully","service":"database-service","timestamp":"2024-11-18T20:17:21.949Z"}
+{"level":"info","message":"MongoDB connected successfully after retries","service":"database-service","timestamp":"2024-11-18T20:17:21.952Z"}
+{"level":"info","message":"MongoDB connection state changed to: connected","service":"database-service","timestamp":"2024-11-18T20:17:31.873Z"}
+{"level":"info","message":"MongoDB connected successfully","service":"database-service","timestamp":"2024-11-18T20:31:46.756Z"}
+{"level":"info","message":"MongoDB connected successfully after retries","service":"database-service","timestamp":"2024-11-18T20:31:46.759Z"}
+{"level":"info","message":"MongoDB connection state changed to: connected","service":"database-service","timestamp":"2024-11-18T20:31:56.691Z"}
+{"level":"info","message":"MongoDB connected successfully","service":"database-service","timestamp":"2024-11-18T20:35:10.820Z"}
+{"level":"info","message":"MongoDB connected successfully after retries","service":"database-service","timestamp":"2024-11-18T20:35:10.824Z"}
+{"level":"info","message":"MongoDB connection state changed to: connected","service":"database-service","timestamp":"2024-11-18T20:35:20.747Z"}
+{"level":"info","message":"MongoDB connected successfully","service":"database-service","timestamp":"2024-11-19T00:47:27.995Z"}
+{"level":"info","message":"MongoDB connected successfully after retries","service":"database-service","timestamp":"2024-11-19T00:47:28.000Z"}
+{"level":"info","message":"MongoDB connection state changed to: connected","service":"database-service","timestamp":"2024-11-19T00:47:37.917Z"}
+{"level":"info","message":"MongoDB connected successfully","service":"database-service","timestamp":"2024-11-19T00:48:42.834Z"}
+{"level":"info","message":"MongoDB connected successfully after retries","service":"database-service","timestamp":"2024-11-19T00:48:42.839Z"}
+{"level":"info","message":"MongoDB connection state changed to: connected","service":"database-service","timestamp":"2024-11-19T00:48:52.765Z"}
+{"level":"info","message":"MongoDB connected successfully","service":"database-service","timestamp":"2024-11-19T01:00:05.204Z"}
+{"level":"info","message":"MongoDB connected successfully after retries","service":"database-service","timestamp":"2024-11-19T01:00:05.207Z"}
+{"level":"info","message":"MongoDB connection state changed to: connected","service":"database-service","timestamp":"2024-11-19T01:00:15.146Z"}
+{"level":"info","message":"MongoDB connected successfully","service":"database-service","timestamp":"2024-11-19T01:08:26.330Z"}
+{"level":"info","message":"MongoDB connected successfully after retries","service":"database-service","timestamp":"2024-11-19T01:08:26.333Z"}
+{"level":"info","message":"MongoDB connection state changed to: connected","service":"database-service","timestamp":"2024-11-19T01:08:36.271Z"}
+{"level":"info","message":"MongoDB connected successfully","service":"database-service","timestamp":"2024-11-19T01:11:04.674Z"}
+{"level":"info","message":"MongoDB connected successfully after retries","service":"database-service","timestamp":"2024-11-19T01:11:04.677Z"}
+{"level":"info","message":"MongoDB connection state changed to: connected","service":"database-service","timestamp":"2024-11-19T01:11:14.616Z"}
+{"level":"info","message":"MongoDB connected successfully","service":"database-service","timestamp":"2024-11-19T01:23:41.101Z"}
+{"level":"info","message":"MongoDB connected successfully after retries","service":"database-service","timestamp":"2024-11-19T01:23:41.105Z"}
+{"level":"info","message":"MongoDB connection state changed to: connected","service":"database-service","timestamp":"2024-11-19T01:23:51.041Z"}
+{"level":"info","message":"MongoDB connected successfully","service":"database-service","timestamp":"2024-11-19T01:28:00.759Z"}
+{"level":"info","message":"MongoDB connected successfully after retries","service":"database-service","timestamp":"2024-11-19T01:28:00.764Z"}
+{"level":"info","message":"MongoDB connection state changed to: connected","service":"database-service","timestamp":"2024-11-19T01:28:10.689Z"}
+{"level":"info","message":"MongoDB connected successfully","service":"database-service","timestamp":"2024-11-19T01:38:36.895Z"}
+{"level":"info","message":"MongoDB connected successfully after retries","service":"database-service","timestamp":"2024-11-19T01:38:36.900Z"}
+{"level":"info","message":"MongoDB connection state changed to: connected","service":"database-service","timestamp":"2024-11-19T01:38:46.824Z"}
+{"level":"info","message":"MongoDB connected successfully","service":"database-service","timestamp":"2024-11-19T02:15:35.486Z"}
+{"level":"info","message":"MongoDB connected successfully after retries","service":"database-service","timestamp":"2024-11-19T02:15:35.490Z"}
+{"level":"info","message":"MongoDB connection state changed to: connected","service":"database-service","timestamp":"2024-11-19T02:15:45.412Z"}
+{"level":"info","message":"MongoDB connected successfully","service":"database-service","timestamp":"2024-11-19T07:42:13.144Z"}
+{"level":"info","message":"MongoDB connected successfully after retries","service":"database-service","timestamp":"2024-11-19T07:42:13.149Z"}
+{"level":"info","message":"MongoDB connection state changed to: connected","service":"database-service","timestamp":"2024-11-19T07:42:23.067Z"}
+{"level":"info","message":"MongoDB connected successfully","service":"database-service","timestamp":"2024-11-19T07:50:41.271Z"}
+{"level":"info","message":"MongoDB connected successfully after retries","service":"database-service","timestamp":"2024-11-19T07:50:41.278Z"}
+{"level":"info","message":"MongoDB connection state changed to: connected","service":"database-service","timestamp":"2024-11-19T07:50:51.233Z"}
+{"level":"warn","message":"MongoDB disconnected","service":"database-service","timestamp":"2024-11-19T07:53:37.659Z"}
+{"level":"warn","message":"Failed to connect to MongoDB. Retrying in 5 seconds...","service":"database-service","timestamp":"2024-11-19T07:53:37.662Z"}
+{"cause":{},"level":"error","message":"MongoDB connection error: connect ECONNREFUSED 127.0.0.1:27017","reason":{"commonWireVersion":0,"compatible":true,"heartbeatFrequencyMS":10000,"localThresholdMS":15,"logicalSessionTimeoutMinutes":null,"maxElectionId":null,"maxSetVersion":null,"servers":{"localhost:27017":{"$clusterTime":null,"address":"localhost:27017","arbiters":[],"electionId":null,"error":{},"hosts":[],"lastUpdateTime":27731546,"lastWriteDate":0,"logicalSessionTimeoutMinutes":null,"maxBsonObjectSize":null,"maxMessageSizeBytes":null,"maxWireVersion":0,"maxWriteBatchSize":null,"me":null,"minRoundTripTime":0,"minWireVersion":0,"passives":[],"primary":null,"roundTripTime":-1,"setName":null,"setVersion":null,"tags":{},"topologyVersion":null,"type":"Unknown"}},"setName":null,"stale":false,"type":"Unknown"},"service":"database-service","stack":"MongoServerSelectionError: connect ECONNREFUSED 127.0.0.1:27017\n    at Topology.selectServer (/home/alsaeed/Desktop/adeo-request-system-github/adeo-request-system-backend/node_modules/mongodb/lib/sdam/topology.js:303:38)\n    at async Topology._connect (/home/alsaeed/Desktop/adeo-request-system-github/adeo-request-system-backend/node_modules/mongodb/lib/sdam/topology.js:196:28)\n    at async Topology.connect (/home/alsaeed/Desktop/adeo-request-system-github/adeo-request-system-backend/node_modules/mongodb/lib/sdam/topology.js:158:13)\n    at async topologyConnect (/home/alsaeed/Desktop/adeo-request-system-github/adeo-request-system-backend/node_modules/mongodb/lib/mongo_client.js:223:17)\n    at async MongoClient._connect (/home/alsaeed/Desktop/adeo-request-system-github/adeo-request-system-backend/node_modules/mongodb/lib/mongo_client.js:236:13)\n    at async MongoClient.connect (/home/alsaeed/Desktop/adeo-request-system-github/adeo-request-system-backend/node_modules/mongodb/lib/mongo_client.js:161:13)\n    at async NativeConnection.createClient (/home/alsaeed/Desktop/adeo-request-system-github/adeo-request-system-backend/node_modules/mongoose/lib/drivers/node-mongodb-native/connection.js:320:3)\n    at async NativeConnection.openUri (/home/alsaeed/Desktop/adeo-request-system-github/adeo-request-system-backend/node_modules/mongoose/lib/connection.js:858:5)\n    at async connectWithRetry (file:///home/alsaeed/Desktop/adeo-request-system-github/adeo-request-system-backend/src/config/database.js:95:7)\n    at async connectDB (file:///home/alsaeed/Desktop/adeo-request-system-github/adeo-request-system-backend/src/config/database.js:121:5)","timestamp":"2024-11-19T07:53:37.664Z"}
