@@ -91,9 +91,10 @@ By doing so, the tool optimizes internal workflows, reduces processing time, and
 ---
 
 ## **Contributors**
-- [Name 1]  
-- [Name 2]  
-- [Name 3]  
-- Abdullah Ali Abdullah Salem  
-
+- Ali Saeed 
+- Abdullah Ali  
+- Mahmoud Abdelsalam
+- Abdulrahman Alkaisi
+- Mustafa Radwan
+- Mohamed Abdelmaged
 ---
