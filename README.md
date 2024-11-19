@@ -28,11 +28,12 @@ By doing so, the tool optimizes internal workflows, reduces processing time, and
 
 ### **Trade-offs**
 1. **Simplified MVP Approach**: Focused on essential features (request structuring, summarization, and feedback) to deliver a functional prototype within the given timeframe.
-   - **Trade-off**: Left out advanced features like integration with external task management tools (e.g., Trello, Jira).
+   - **Trade-off**: Prioritized ease of use over advanced customization options, such as user-specific templates or customizable workflows. This ensured faster development but limited flexibility for diverse use cases.
 2. **Model Complexity vs. Speed**: Chose a moderately complex AI model to ensure fast response times.
    - **Trade-off**: Sacrificed some level of sophistication in summarization for performance.
-3. **Centralization vs. Scalability**: Designed the system to centralize opinion requests internally for this iteration.
-   - **Trade-off**: Future iterations will address scalability for larger organizations or multiple departments.
+3. User Experience vs. Feature Expansion: Prioritized building a clean and intuitive user interface to maximize adoption and usability.
+   - **Trade-off**: Deferred the inclusion of more advanced analytics and reporting dashboards, which could provide deeper insights but require additional development time.
+
 
 ### **What Could Be Done Differently**
 1. **Enhanced Feedback System**: Expanding feedback to include dynamic suggestions based on organizational standards.
