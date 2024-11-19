@@ -54,11 +54,41 @@ const AnalyticsPage = () => {
   const fetchAnalytics = async () => {
     try {
       setLoading(true);
-      const response = await fetch('/api/requests/analytics'); // Adjust the endpoint as needed
-      if (!response.ok) throw new Error('Failed to fetch analytics data');
-      const data = await response.json();
+      const response = await fetch('/api/requests/analytics', {
+        method: 'GET',
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      // Log the raw response for debugging
+      const rawData = await response.text();
+      console.log('Raw API Response:', rawData);
+
+      // Try to parse the JSON data
+      let data;
+      try {
+        data = JSON.parse(rawData);
+      } catch (parseError) {
+        console.error('JSON Parse Error:', parseError);
+        throw new Error('Failed to parse response data');
+      }
+
+      // Validate the data structure
+      if (!Array.isArray(data)) {
+        console.warn('Data is not an array:', data);
+        // If it's a single object, wrap it in an array
+        data = [data];
+      }
+
       setRequests(data);
     } catch (err) {
+      console.error('Fetch Error:', err);
       setError(err instanceof Error ? err.message : 'An error occurred');
     } finally {
       setLoading(false);
@@ -69,6 +99,7 @@ const AnalyticsPage = () => {
     fetchAnalytics();
   }, []);
 
+  // Render loading state
   if (loading) {
     return (
       <div className="container mx-auto p-6">
@@ -81,12 +112,34 @@ const AnalyticsPage = () => {
     );
   }
 
+  // Render error state
   if (error) {
     return (
       <div className="container mx-auto p-6">
         <Alert variant="destructive">
-          <AlertDescription>{error}</AlertDescription>
+          <AlertDescription>
+            {error}
+            <button 
+              onClick={fetchAnalytics}
+              className="ml-4 px-4 py-2 bg-primary text-white rounded hover:bg-primary/90"
+            >
+              Retry
+            </button>
+          </AlertDescription>
         </Alert>
+      </div>
+    );
+  }
+
+  // If no data is available, show empty state
+  if (!requests.length) {
+    return (
+      <div className="container mx-auto p-6">
+        <Card>
+          <CardContent className="p-6">
+            <p className="text-center">No analytics data available</p>
+          </CardContent>
+        </Card>
       </div>
     );
   }
@@ -95,24 +148,26 @@ const AnalyticsPage = () => {
   const programStats = {
     totalRequests: requests.length,
     averageProcessingTime: requests.reduce((acc, req) => 
-      acc + req.metadata.processingDuration, 0) / requests.length,
+      acc + (req.metadata?.processingDuration || 0), 0) / requests.length || 0,
     highRiskCount: requests.filter(req => 
-      req.analysis.riskLevel === 'high').length,
+      req.analysis?.riskLevel === 'high').length || 0,
     completionRate: "100%"
   };
 
   // Extract unique departments and their request counts
   const departmentStats = requests.reduce((acc, req) => {
-    acc[req.department] = (acc[req.department] || 0) + 1;
+    if (req.department) {
+      acc[req.department] = (acc[req.department] || 0) + 1;
+    }
     return acc;
   }, {} as Record<string, number>);
 
   // Aggregate risks across all requests
   const aggregateRisks = requests.flatMap(req => 
-    req.recommendations.risks.map(risk => ({
+    (req.recommendations?.risks || []).map(risk => ({
       risk,
-      impact: req.analysis.riskLevel,
-      department: req.department
+      impact: req.analysis?.riskLevel || 'unknown',
+      department: req.department || 'unknown'
     }))
   );
 
