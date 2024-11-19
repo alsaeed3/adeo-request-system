@@ -94,3 +94,6 @@
 {"level":"info","message":"MongoDB connected successfully","service":"database-service","timestamp":"2024-11-19T01:38:36.895Z"}
 {"level":"info","message":"MongoDB connected successfully after retries","service":"database-service","timestamp":"2024-11-19T01:38:36.900Z"}
 {"level":"info","message":"MongoDB connection state changed to: connected","service":"database-service","timestamp":"2024-11-19T01:38:46.824Z"}
+{"level":"info","message":"MongoDB connected successfully","service":"database-service","timestamp":"2024-11-19T02:15:35.486Z"}
+{"level":"info","message":"MongoDB connected successfully after retries","service":"database-service","timestamp":"2024-11-19T02:15:35.490Z"}
+{"level":"info","message":"MongoDB connection state changed to: connected","service":"database-service","timestamp":"2024-11-19T02:15:45.412Z"}

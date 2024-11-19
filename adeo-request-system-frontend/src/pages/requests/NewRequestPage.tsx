@@ -17,7 +17,8 @@ const NewRequestPage = () => {
     description: '',
     requestType: '',
     priority: '',
-    attachments: null
+    attachments: null,
+    department: ''
   });
 
   const [isLoading, setIsLoading] = useState(false);
@@ -41,6 +42,10 @@ const NewRequestPage = () => {
       setError('Priority is required');
       return false;
     }
+    if (!formData.department) {
+      setError('Department is required');
+      return false;
+    }
     return true;
   };
 
@@ -60,6 +65,7 @@ const NewRequestPage = () => {
         formDataToSend.append('description', formData.description);
         formDataToSend.append('requestType', formData.requestType);
         formDataToSend.append('priority', formData.priority);
+        formDataToSend.append('department', formData.department);
 
         // Add files if any
         if (formData.attachments) {
@@ -161,10 +167,45 @@ const NewRequestPage = () => {
                     <SelectValue placeholder="Select request type" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="Feature Request">Feature Request</SelectItem>
-                    <SelectItem value="Bug Report">Bug Report</SelectItem>
-                    <SelectItem value="Access Request">Access Request</SelectItem>
-                    <SelectItem value="Other">Other</SelectItem>
+                    <SelectItem value="Policy Development">Policy Development Request</SelectItem>
+                    <SelectItem value="Strategic Initiative">Strategic Initiative Proposal</SelectItem>
+                    <SelectItem value="Program Approval">Program Approval Request</SelectItem>
+                    <SelectItem value="Budget Allocation">Budget Allocation Request</SelectItem>
+                    <SelectItem value="Inter-Department Collaboration">Inter-Department Collaboration</SelectItem>
+                    <SelectItem value="Executive Decision">Executive Decision Request</SelectItem>
+                    <SelectItem value="Regulatory Amendment">Regulatory Amendment Request</SelectItem>
+                    <SelectItem value="Resource Support">Resource Support Request</SelectItem>
+                    <SelectItem value="Technical Assistance">Technical Assistance Request</SelectItem>
+                    <SelectItem value="Other">Other Administrative Request</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div>
+                <Label htmlFor="department">Department</Label>
+                <Select 
+                  value={formData.department}
+                  onValueChange={(value) => {
+                    setFormData(prev => ({ ...prev, department: value }));
+                    setError('');
+                  }}
+                  required
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select department" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="DCD">Department of Community Development</SelectItem>
+                    <SelectItem value="DCT">Department of Culture and Tourism</SelectItem>
+                    <SelectItem value="DED">Department of Economic Development</SelectItem>
+                    <SelectItem value="ADEK">Department of Education and Knowledge</SelectItem>
+                    <SelectItem value="DOE">Department of Energy</SelectItem>
+                    <SelectItem value="DOF">Department of Finance</SelectItem>
+                    <SelectItem value="DGE">Department of Government Enablement</SelectItem>
+                    <SelectItem value="DOH">Department of Health</SelectItem>
+                    <SelectItem value="DMT">Department of Municipalities and Transport</SelectItem>
+                    <SelectItem value="ADJD">Abu Dhabi Judicial Department</SelectItem>
+                    <SelectItem value="ITC">Integrated Transport Center</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
