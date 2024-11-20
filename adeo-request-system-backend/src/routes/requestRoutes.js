@@ -8,9 +8,6 @@ import { fileURLToPath } from 'url';
 import { dirname } from 'path';
 import { processRequest } from '../services/requestProcessor.js';
 import rateLimit from 'express-rate-limit';
-import { extractTextFromFile, cleanupOldFiles } from '../services/fileProcessor.js';
-import multer from 'multer';
-import { extractTextFromFile } from './fileProcessor.js';
 
 const router = express.Router();
 
@@ -26,34 +23,6 @@ const __dirname = dirname(__filename);
 
 // Middleware to parse JSON
 router.use(express.json());
-
-const storage = multer.diskStorage({
-    destination: function (req, file, cb) {
-      cb(null, 'uploads/');
-    },
-    filename: function (req, file, cb) {
-      const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-      cb(null, file.fieldname + '-' + uniqueSuffix + path.extname(file.originalname));
-    }
-});
-
-const upload = multer({ 
-    storage: storage,
-    limits: { fileSize: 10 * 1024 * 1024 }, // 10MB limit
-    fileFilter: (req, file, cb) => {
-      const allowedTypes = [
-        'application/pdf',
-        'application/msword',
-        'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-        'text/plain'
-      ];
-      if (allowedTypes.includes(file.mimetype)) {
-        cb(null, true);
-      } else {
-        cb(new Error('Invalid file type'));
-      }
-    }
-});   
 
 // Helper function to generate request number
 const generateRequestNumber = async () => {
@@ -170,60 +139,67 @@ router.get('/', async (req, res) => {
 
 router.post('/:id/analyze', analyzeLimit, async (req, res) => {
     try {
-      const request = await Request.findById(req.params.id);
-      if (!request) {
-        return res.status(404).json({
-          status: 'error',
-          message: 'Request not found'
-        });
-      }
-  
-      // Extract text from attached file if it exists
-      let fileContent = '';
-      if (request.attachments && request.attachments.length > 0) {
-        const attachment = request.attachments[0];
-        fileContent = await extractTextFromFile(attachment.path, attachment.mimetype);
-      }
-  
-      // Process the request with file content
-      const analysis = await processRequest({
-        title: request.title,
-        description: request.description,
-        type: request.requestType,
-        priority: request.priority,
-        department: request.department,
-        fileContent: fileContent, // Add the extracted file content
-        metadata: {
-          requestId: request._id,
-          requestNumber: request.requestNumber,
-          analysisVersion: '1.0'
+        const request = await Request.findById(req.params.id);
+        if (!request) {
+            return res.status(404).json({
+                status: 'error',
+                message: 'Request not found'
+            });
         }
-      });
-  
-      // Update request with analysis results
-      const updatedRequest = await Request.findByIdAndUpdate(
-        req.params.id,
-        {
-          $set: {
-            'metadata.analysis': analysis,
-            'metadata.lastAnalyzed': new Date()
-          }
-        },
-        { new: true }
-      );
-  
-      res.json({
-        status: 'success',
-        data: analysis
-      });
-  
+
+        // Process the request using the requestProcessor
+        const analysis = await processRequest({
+            title: request.title,
+            description: request.description,
+            type: request.requestType,
+            priority: request.priority,
+            department: request.department,
+            content: request.description,
+            metadata: {
+                requestId: request._id,
+                requestNumber: request.requestNumber,
+                analysisVersion: '1.0'
+            }
+        });
+
+        // Add error checking for the analysis result
+        if (!analysis || !analysis.analysis || !analysis.recommendations) {
+            throw new Error('Invalid analysis result structure');
+        }
+
+        // Log successful analysis
+        console.log('Analysis completed successfully for request:', request.requestNumber);
+
+        // Update the request with the analysis
+        const updatedRequest = await Request.findByIdAndUpdate(
+            req.params.id,
+            {
+                $set: {
+                    'metadata.analysis': analysis,
+                    'metadata.lastAnalyzed': new Date()
+                }
+            },
+            { new: true }
+        );
+
+        res.json({
+            status: 'success',
+            data: analysis
+        });
+
     } catch (error) {
-      console.error('Analysis error:', error);
-      res.status(500).json({
-        status: 'error',
-        message: 'Failed to analyze request',
-        error: error.message
-      });
+        console.error('Analysis error details:', {
+            requestId: req.params.id,
+            error: error.message,
+            stack: error.stack
+        });
+        
+        res.status(500).json({
+            status: 'error',
+            message: 'Failed to analyze request',
+            error: error.message,
+            requestId: req.params.id
+        });
     }
 });
 

@@ -8,8 +8,6 @@ import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { fetchWithConfig } from '@/api/config';
-import { Loader2 } from "lucide-react";
-
 // import { Progress } from '@/components/ui/progress'; // Import Progress component if you have it
 
 const NewRequestPage = () => {
@@ -19,7 +17,7 @@ const NewRequestPage = () => {
     description: '',
     requestType: '',
     priority: '',
-    attachments: null as File | null,
+    attachments: null,
     department: ''
   });
 
@@ -53,87 +51,60 @@ const NewRequestPage = () => {
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-  
+
     if (!validateForm()) {
-      return;
+        return;
     }
-  
+
     setIsLoading(true);
-    setError('');
-    
     try {
-      const formDataToSend = new FormData();
-      
-      // Append all form fields
-      formDataToSend.append('title', formData.title);
-      formDataToSend.append('description', formData.description);
-      formDataToSend.append('requestType', formData.requestType);
-      formDataToSend.append('priority', formData.priority);
-      formDataToSend.append('department', formData.department);
-  
-      // Add file if exists
-      if (formData.attachments) {
-        formDataToSend.append('file', formData.attachments);
-      }
-  
-      const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
-      
-      // Use fetch with upload progress
-      const xhr = new XMLHttpRequest();
-      
-      // Create promise to handle the XMLHttpRequest
-      const uploadPromise = new Promise<void>((resolve, reject) => {
-        xhr.upload.addEventListener('progress', (event) => {
-          if (event.lengthComputable) {
-            const progress = Math.round((event.loaded / event.total) * 100);
-            setUploadProgress(progress);
-          }
+        const formDataToSend = new FormData();
+        
+        // Append form fields
+        formDataToSend.append('title', formData.title);
+        formDataToSend.append('description', formData.description);
+        formDataToSend.append('requestType', formData.requestType);
+        formDataToSend.append('priority', formData.priority);
+        formDataToSend.append('department', formData.department);
+
+        // Add files if any
+        if (formData.attachments) {
+            formDataToSend.append('files', formData.attachments);
+        }
+
+        const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+        const response = await fetch(`${API_URL}/api/requests`, {
+            method: 'POST',
+            body: formDataToSend,
+            credentials: 'include',
         });
-  
-        xhr.addEventListener('load', () => {
-          if (xhr.status >= 200 && xhr.status < 300) {
-            resolve();
-          } else {
-            reject(new Error(`Upload failed with status ${xhr.status}`));
-          }
-        });
-  
-        xhr.addEventListener('error', () => {
-          reject(new Error('Upload failed'));
-        });
-  
-        xhr.open('POST', `${API_URL}/api/requests`);
-        xhr.withCredentials = true;
-        xhr.send(formDataToSend);
-      });
-  
-      await uploadPromise;
-  
-      // Navigate to requests page after successful submission
-      navigate('/requests');
-  
+
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.message || 'Failed to create request');
+        }
+
+        const result = await response.json();
+        console.log('Request created successfully:', result);
+        
+        // Navigate to requests page after successful submission
+        navigate('/requests');
+
     } catch (error) {
-      console.error('Error submitting request:', error);
-      setError(error instanceof Error ? error.message : 'Failed to submit request');
+        console.error('Error submitting request:', error);
+        setError(error.message || 'Failed to submit request');
     } finally {
-      setIsLoading(false);
-      setUploadProgress(0);
+        setIsLoading(false);
     }
   };
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = (e) => {
     const file = e.target.files?.[0];
     if (file) {
       // Validate file type
-      const allowedTypes = [
-        'application/pdf',
-        'application/msword',
-        'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-        'text/plain'
-      ];
-      
+      const allowedTypes = ['image/jpeg', 'image/png', 'application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
       if (!allowedTypes.includes(file.type)) {
-        setError('File type not supported. Please upload a PDF, Word document, or text file.');
+        setError('File type not supported. Please upload an image, PDF, or Word document.');
         e.target.value = ''; // Reset input
         return;
       }
@@ -144,10 +115,9 @@ const NewRequestPage = () => {
         e.target.value = ''; // Reset input
         return;
       }
-  
-      setFormData(prev => ({ ...prev, attachments: file }));
-      setError(''); // Clear any previous errors
     }
+    setFormData(prev => ({ ...prev, attachments: file }));
+    setError(''); // Clear any previous errors
   };
 
   return (
@@ -279,27 +249,24 @@ const NewRequestPage = () => {
               </div>
 
               <div>
-                <Label htmlFor="attachment">Attachment (PDF, Word, or Text file - Max 10MB)</Label>
+                <Label htmlFor="attachment">Attachment (Max 10MB - PDF, Word, or Images)</Label>
                 <Input
                   id="attachment"
                   type="file"
                   onChange={handleFileChange}
                   className="cursor-pointer"
-                  accept=".pdf,.doc,.docx,.txt"
+                  accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
                 />
-                {uploadProgress > 0 && uploadProgress < 100 && (
-                  <div className="w-full mt-2">
-                    <div className="h-2 bg-gray-200 rounded">
-                      <div 
-                        className="h-2 bg-blue-600 rounded transition-all duration-300"
-                        style={{ width: `${uploadProgress}%` }}
-                      />
-                    </div>
-                    <p className="text-sm text-gray-500 mt-1">
-                      Uploading: {uploadProgress}%
-                    </p>
-                  </div>
-                )}
+              </div>
+
+              {uploadProgress > 0 && uploadProgress < 100 && (
+                <div className="w-full">
+                  {/* <Progress value={uploadProgress} className="w-full" /> */}
+                  <p className="text-sm text-gray-500 mt-1">
+                    Uploading: {uploadProgress}%
+                  </p>
+                </div>
+              )}
             </div>
 
             <div className="flex justify-end space-x-4">
@@ -316,14 +283,7 @@ const NewRequestPage = () => {
                 disabled={isLoading}
                 className="min-w-[120px]"
               >
-                {isLoading ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Submitting...
-                  </>
-                ) : (
-                  'Submit Request'
-                )}
+                {isLoading ? 'Submitting...' : 'Submit Request'}
               </Button>
             </div>
           </form>

@@ -15,7 +15,7 @@ import {
 } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Loader2 } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
+import { Badge } from "../../components/ui/badge";
 import RequestAnalysis from './RequestAnalysis';
 
 interface RequestDetails {
